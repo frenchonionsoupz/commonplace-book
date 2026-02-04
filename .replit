@@ -45,5 +45,5 @@ externalPort = 80
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["node", "server/dist/index.js"]
+run = ["node", "server/dist/src/index.js"]
 build = ["bash", "-c", "npm run install:all && npm run build"]
