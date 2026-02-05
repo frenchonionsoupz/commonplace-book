@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Edit2, Trash2, Clock, Feather } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Clock, PenLine, Mic, Film, Bookmark } from 'lucide-react';
 import { api } from '../api';
 import { Note } from '../types';
 import NoteEditor from '../components/NoteEditor';
+
+const typeIcon = {
+  text: PenLine,
+  voice: Mic,
+  video: Film,
+};
 
 export default function NoteView() {
   const { id } = useParams<{ id: string }>();
@@ -61,8 +67,8 @@ export default function NoteView() {
   if (editing) {
     return (
       <div>
-        <button 
-          onClick={() => setEditing(false)} 
+        <button
+          onClick={() => setEditing(false)}
           className="flex items-center gap-2 text-sm text-ink-600 hover:text-ink-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -76,29 +82,30 @@ export default function NoteView() {
   const date = new Date(note.created_at);
   const updatedDate = new Date(note.updated_at);
   const displayContent = note.content || note.transcription || '';
+  const Icon = typeIcon[note.type] || PenLine;
 
   return (
     <div>
-      <Link 
-        to="/" 
+      <Link
+        to="/"
         className="flex items-center gap-2 text-sm text-ink-600 hover:text-ink-800 mb-6 w-fit"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to book
       </Link>
 
-      <article className="card p-8 border-l-4 border-l-amber-500">
+      <article className="entry-card p-8">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2 text-amber-700">
-            <Feather className="w-5 h-5" />
+          <div className="flex items-center gap-2 text-parchment-700">
+            <Icon className="w-5 h-5" />
             <span className="text-sm font-serif italic flex items-center gap-2">
               <Clock className="w-3 h-3" />
-              {date.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                month: 'long', 
-                day: 'numeric', 
-                year: 'numeric' 
+              {date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
               })}
             </span>
           </div>
@@ -118,6 +125,18 @@ export default function NoteView() {
           </div>
         </div>
 
+        {/* Media player */}
+        {note.media_url && note.type === 'voice' && (
+          <div className="mb-6">
+            <audio controls src={note.media_url} className="w-full rounded" />
+          </div>
+        )}
+        {note.media_url && note.type === 'video' && (
+          <div className="mb-6">
+            <video controls src={note.media_url} className="w-full rounded bg-black" />
+          </div>
+        )}
+
         {/* Content */}
         <div className="mb-6">
           <div className="font-serif text-lg text-ink-800 leading-relaxed whitespace-pre-wrap">
@@ -125,13 +144,21 @@ export default function NoteView() {
           </div>
         </div>
 
+        {/* Source */}
+        {note.source && (
+          <div className="flex items-center gap-2 text-sm text-ink-500 mb-4 font-serif italic">
+            <Bookmark className="w-4 h-4 text-parchment-600" />
+            {note.source}
+          </div>
+        )}
+
         {/* Tags */}
         {note.tags.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap pt-4 border-t border-parchment-200">
             {note.tags.map((tag) => (
-              <Link 
-                key={tag} 
-                to={`/?tag=${tag}`} 
+              <Link
+                key={tag}
+                to={`/?tag=${tag}`}
                 className="tag hover:bg-parchment-300 transition-colors"
               >
                 {tag}
@@ -143,10 +170,10 @@ export default function NoteView() {
         {/* Updated timestamp */}
         {note.updated_at !== note.created_at && (
           <p className="text-xs text-ink-400 mt-4 font-serif italic">
-            Last updated {updatedDate.toLocaleDateString('en-US', { 
-              month: 'long', 
-              day: 'numeric', 
-              year: 'numeric' 
+            Last updated {updatedDate.toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric'
             })}
           </p>
         )}

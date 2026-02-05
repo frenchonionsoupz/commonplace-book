@@ -9,13 +9,23 @@ function paramId(req: Request): string {
   return Array.isArray(id) ? id[0] : id;
 }
 
+function deriveTitle(content: string, transcription: string, type: string): string {
+  const text = content || transcription || '';
+  if (text.length > 0) {
+    const firstLine = text.split('\n')[0].trim();
+    return firstLine.length > 80 ? firstLine.slice(0, 80) + '...' : firstLine;
+  }
+  const labels: Record<string, string> = { text: 'Note', voice: 'Voice Note', video: 'Video Note' };
+  return `${labels[type] || 'Note'} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+}
+
 async function getNoteTags(noteId: string): Promise<string[]> {
   const result = await pool.query(`
     SELECT t.name FROM tags t
     JOIN note_tags nt ON nt.tag_id = t.id
     WHERE nt.note_id = $1
   `, [noteId]);
-  return result.rows.map(t => t.name);
+  return result.rows.map((t: any) => t.name);
 }
 
 async function syncNoteTags(noteId: string, tagNames: string[]) {
@@ -27,7 +37,7 @@ async function syncNoteTags(noteId: string, tagNames: string[]) {
 
     let tagResult = await pool.query('SELECT id FROM tags WHERE name = $1', [trimmed]);
     let tagId: string;
-    
+
     if (tagResult.rows.length === 0) {
       tagId = uuidv4();
       await pool.query('INSERT INTO tags (id, name) VALUES ($1, $2)', [tagId, trimmed]);
@@ -44,7 +54,7 @@ async function syncNoteTags(noteId: string, tagNames: string[]) {
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { search, tag, type, source_type, public_only } = req.query;
+    const { search, tag, type, public_only, limit } = req.query;
 
     let query = 'SELECT * FROM notes WHERE 1=1';
     const params: any[] = [];
@@ -57,11 +67,6 @@ router.get('/', async (req: Request, res: Response) => {
     if (type) {
       query += ` AND type = $${paramIndex++}`;
       params.push(type);
-    }
-
-    if (source_type) {
-      query += ` AND source_type = $${paramIndex++}`;
-      params.push(source_type);
     }
 
     if (search) {
@@ -81,9 +86,17 @@ router.get('/', async (req: Request, res: Response) => {
 
     query += ' ORDER BY created_at DESC';
 
+    if (limit) {
+      const lim = parseInt(limit as string, 10);
+      if (lim > 0) {
+        query += ` LIMIT $${paramIndex++}`;
+        params.push(lim);
+      }
+    }
+
     const result = await pool.query(query, params);
 
-    const notes = await Promise.all(result.rows.map(async (note) => ({
+    const notes = await Promise.all(result.rows.map(async (note: any) => ({
       ...note,
       tags: await getNoteTags(note.id),
     })));
@@ -116,25 +129,25 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { title, content, type, source, source_type, media_url, transcription, tags, is_public } = req.body;
+    const { title, content, type, source, media_url, transcription, tags, is_public } = req.body;
 
-    if (!title || !type) {
-      return res.status(400).json({ error: 'Title and type are required' });
+    if (!type) {
+      return res.status(400).json({ error: 'Type is required' });
     }
 
     const id = uuidv4();
     const now = new Date().toISOString();
+    const finalTitle = title || deriveTitle(content || '', transcription || '', type);
 
     await pool.query(`
-      INSERT INTO notes (id, title, content, type, source, source_type, media_url, transcription, created_at, updated_at, is_public)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      INSERT INTO notes (id, title, content, type, source, media_url, transcription, created_at, updated_at, is_public)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     `, [
       id,
-      title,
+      finalTitle,
       content || '',
       type,
       source || '',
-      source_type || '',
       media_url || '',
       transcription || '',
       now,
@@ -163,12 +176,12 @@ router.put('/:id', async (req: Request, res: Response) => {
   try {
     const id = paramId(req);
     const existing = await pool.query('SELECT * FROM notes WHERE id = $1', [id]);
-    
+
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Note not found' });
     }
 
-    const { title, content, source, source_type, media_url, transcription, tags, is_public } = req.body;
+    const { title, content, source, media_url, transcription, tags, is_public } = req.body;
     const now = new Date().toISOString();
 
     await pool.query(`
@@ -176,17 +189,15 @@ router.put('/:id', async (req: Request, res: Response) => {
         title = COALESCE($1, title),
         content = COALESCE($2, content),
         source = COALESCE($3, source),
-        source_type = COALESCE($4, source_type),
-        media_url = COALESCE($5, media_url),
-        transcription = COALESCE($6, transcription),
-        is_public = COALESCE($7, is_public),
-        updated_at = $8
-      WHERE id = $9
+        media_url = COALESCE($4, media_url),
+        transcription = COALESCE($5, transcription),
+        is_public = COALESCE($6, is_public),
+        updated_at = $7
+      WHERE id = $8
     `, [
       title ?? null,
       content ?? null,
       source ?? null,
-      source_type ?? null,
       media_url ?? null,
       transcription ?? null,
       is_public ?? null,
@@ -215,7 +226,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = paramId(req);
     const existing = await pool.query('SELECT * FROM notes WHERE id = $1', [id]);
-    
+
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Note not found' });
     }

@@ -9,7 +9,7 @@ async function getNoteTags(noteId: string): Promise<string[]> {
     JOIN note_tags nt ON nt.tag_id = t.id
     WHERE nt.note_id = $1
   `, [noteId]);
-  return result.rows.map(t => t.name);
+  return result.rows.map((t: any) => t.name);
 }
 
 router.get('/notes', async (req: Request, res: Response) => {
@@ -42,7 +42,7 @@ router.get('/notes', async (req: Request, res: Response) => {
 
     const result = await pool.query(query, params);
 
-    const notes = await Promise.all(result.rows.map(async (note) => ({
+    const notes = await Promise.all(result.rows.map(async (note: any) => ({
       ...note,
       is_public: true,
       tags: await getNoteTags(note.id),

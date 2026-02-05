@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, LayoutGrid, List, Feather } from 'lucide-react';
+import { Plus, PenLine } from 'lucide-react';
 import { api } from '../api';
 import { Note, TagCount } from '../types';
 import NoteCard from '../components/NoteCard';
@@ -14,7 +14,6 @@ export default function Dashboard() {
   const [showEditor, setShowEditor] = useState(false);
   const [search, setSearch] = useState('');
   const [activeTag, setActiveTag] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -73,57 +72,41 @@ export default function Dashboard() {
       {/* Filters row */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <TagFilter tags={tags} activeTag={activeTag} onSelect={setActiveTag} />
-
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`btn-icon ${viewMode === 'grid' ? 'bg-parchment-200' : ''}`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`btn-icon ${viewMode === 'list' ? 'bg-parchment-200' : ''}`}
-          >
-            <List className="w-4 h-4" />
-          </button>
-        </div>
       </div>
 
-      {/* Notes grid/list */}
+      {/* Flourish divider */}
+      <div className="flourish" />
+
+      {/* Notes list */}
       {loading ? (
         <div className="text-center py-16 text-ink-400">
           <div className="animate-spin w-8 h-8 border-2 border-ink-300 border-t-ink-600 rounded-full mx-auto mb-4" />
-          Loading your commonplace book...
+          <p className="font-serif italic">Loading your commonplace book...</p>
         </div>
       ) : notes.length === 0 ? (
         <div className="text-center py-16">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-amber-50 flex items-center justify-center">
-            <Feather className="w-10 h-10 text-amber-600" />
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-parchment-100 flex items-center justify-center">
+            <PenLine className="w-10 h-10 text-parchment-600" />
           </div>
           <h3 className="text-xl font-serif font-semibold text-ink-700 mb-2">
             {search || activeTag ? 'No entries found' : 'Your Commonplace Book awaits'}
           </h3>
-          <p className="text-sm text-ink-500 mb-6 max-w-md mx-auto leading-relaxed">
+          <p className="text-sm text-ink-500 mb-6 max-w-md mx-auto leading-relaxed font-serif italic">
             {search || activeTag
               ? 'Try adjusting your filters or search terms.'
               : 'In the tradition of scholars past, gather your thoughts, quotes, and reflections. Let this be your personal anthology of wisdom.'}
           </p>
           {!showEditor && !search && !activeTag && (
             <button onClick={() => setShowEditor(true)} className="btn-primary">
-              <Feather className="w-4 h-4 inline mr-2" />
+              <PenLine className="w-4 h-4 inline mr-2" />
               Begin Writing
             </button>
           )}
         </div>
       ) : (
-        <div className={
-          viewMode === 'grid'
-            ? 'grid grid-cols-1 md:grid-cols-2 gap-4'
-            : 'space-y-4'
-        }>
+        <div className="space-y-4">
           {notes.map((note) => (
-            <NoteCard key={note.id} note={note} compact={viewMode === 'list'} />
+            <NoteCard key={note.id} note={note} compact />
           ))}
         </div>
       )}

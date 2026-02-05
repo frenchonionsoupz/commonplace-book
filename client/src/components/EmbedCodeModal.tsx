@@ -31,14 +31,14 @@ export default function EmbedCodeModal({ onClose }: Props) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-ink-900">Embed on Your Website</h2>
+          <h2 className="text-lg font-semibold text-ink-900 font-serif">Embed on Your Website</h2>
           <button onClick={onClose} className="btn-icon">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <p className="text-sm text-ink-600 mb-4">
-          Add your Commonplace Book to any website. Only public notes will be shown.
+        <p className="text-sm text-ink-600 mb-4 font-serif">
+          Add your Commonplace Book to any website. Only public entries will be shown.
         </p>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -53,16 +53,16 @@ export default function EmbedCodeModal({ onClose }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-ink-600 mb-1">Note type</label>
+            <label className="block text-xs font-medium text-ink-600 mb-1">Entry type</label>
             <select value={type} onChange={(e) => setType(e.target.value)} className="input">
               <option value="">All types</option>
               <option value="text">Text</option>
               <option value="voice">Voice</option>
-              <option value="screen">Screen</option>
+              <option value="video">Video</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-ink-600 mb-1">Max notes</label>
+            <label className="block text-xs font-medium text-ink-600 mb-1">Max entries</label>
             <input
               type="number"
               value={limit}

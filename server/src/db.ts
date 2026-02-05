@@ -10,11 +10,10 @@ export async function initDb() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS notes (
         id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
+        title TEXT NOT NULL DEFAULT '',
         content TEXT DEFAULT '',
-        type TEXT NOT NULL CHECK(type IN ('text', 'voice', 'screen')),
+        type TEXT NOT NULL CHECK(type IN ('text', 'voice', 'video')),
         source TEXT DEFAULT '',
-        source_type TEXT DEFAULT '' CHECK(source_type IN ('', 'podcast', 'article', 'lecture', 'book', 'video', 'other')),
         media_url TEXT DEFAULT '',
         transcription TEXT DEFAULT '',
         created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),

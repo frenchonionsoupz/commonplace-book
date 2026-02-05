@@ -30,7 +30,7 @@ export default {
         },
       },
       fontFamily: {
-        serif: ['Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'],
+        serif: ['"EB Garamond"', 'Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'],
         mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],
       },
     },

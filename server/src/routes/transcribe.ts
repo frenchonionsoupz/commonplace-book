@@ -24,17 +24,10 @@ const upload = multer({
   limits: { fileSize: 25 * 1024 * 1024 }, // Whisper limit: 25MB
 });
 
-// POST /api/transcribe — transcribe audio using OpenAI Whisper
-router.post('/', upload.single('audio'), async (req: Request, res: Response) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No audio file provided' });
-  }
-
+async function transcribeFile(filePath: string, fileUrl: string, res: Response) {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-    // Return the file URL but indicate no server-side transcription is available
-    const fileUrl = `/uploads/${req.file.filename}`;
     return res.json({
       url: fileUrl,
       transcription: '',
@@ -47,12 +40,10 @@ router.post('/', upload.single('audio'), async (req: Request, res: Response) => 
     const openai = new OpenAI({ apiKey });
 
     const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(req.file.path),
+      file: fs.createReadStream(filePath),
       model: 'whisper-1',
       response_format: 'text',
     });
-
-    const fileUrl = `/uploads/${req.file.filename}`;
 
     res.json({
       url: fileUrl,
@@ -60,13 +51,30 @@ router.post('/', upload.single('audio'), async (req: Request, res: Response) => 
     });
   } catch (error: any) {
     console.error('Transcription error:', error.message);
-    const fileUrl = `/uploads/${req.file.filename}`;
     res.status(500).json({
       url: fileUrl,
       error: 'Transcription failed',
       message: error.message,
     });
   }
+}
+
+// POST /api/transcribe — transcribe audio using OpenAI Whisper
+router.post('/', upload.single('audio'), async (req: Request, res: Response) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No audio file provided' });
+  }
+  const fileUrl = `/uploads/${req.file.filename}`;
+  await transcribeFile(req.file.path, fileUrl, res);
+});
+
+// POST /api/transcribe/video — transcribe video file using OpenAI Whisper
+router.post('/video', upload.single('file'), async (req: Request, res: Response) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No video file provided' });
+  }
+  const fileUrl = `/uploads/${req.file.filename}`;
+  await transcribeFile(req.file.path, fileUrl, res);
 });
 
 export default router;

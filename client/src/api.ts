@@ -60,7 +60,7 @@ export const api = {
     return res.json() as Promise<{ url: string; filename: string }>;
   },
 
-  // Transcription
+  // Audio transcription
   async transcribe(audioBlob: Blob, filename: string) {
     const formData = new FormData();
     formData.append('audio', audioBlob, filename);
@@ -69,6 +69,18 @@ export const api = {
       body: formData,
     });
     if (!res.ok) throw new Error('Transcription failed');
+    return res.json() as Promise<{ url: string; transcription: string; message?: string }>;
+  },
+
+  // Video transcription
+  async transcribeVideo(file: File) {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    const res = await fetch(`${BASE}/transcribe/video`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Video transcription failed');
     return res.json() as Promise<{ url: string; transcription: string; message?: string }>;
   },
 };

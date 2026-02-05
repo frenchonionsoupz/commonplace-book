@@ -4,17 +4,17 @@
 
 @layer base {
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   .font-serif {
-    font-family: 'Georgia', 'Times New Roman', serif;
+    font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Georgia', 'Times New Roman', serif;
+    font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
   }
 
   code, pre, .font-mono {
@@ -47,9 +47,16 @@
            hover:shadow-md transition-shadow duration-200;
   }
 
+  .entry-card {
+    @apply bg-white rounded-xl border border-parchment-200
+           shadow-[0_1px_3px_rgba(111,77,49,0.08)]
+           hover:shadow-[0_4px_12px_rgba(111,77,49,0.12)]
+           transition-all duration-200;
+  }
+
   .input {
     @apply w-full px-3 py-2 rounded-lg border border-parchment-300 bg-white
-           text-ink-900 placeholder:text-ink-400
+           text-ink-900 placeholder:text-ink-400 placeholder:italic
            focus:outline-none focus:ring-2 focus:ring-parchment-500 focus:border-transparent
            text-sm;
   }
@@ -69,6 +76,14 @@
 
   .recording-pulse {
     animation: pulse-recording 1.5s ease-in-out infinite;
+  }
+
+  .flourish {
+    @apply text-center text-parchment-400 text-lg py-1;
+  }
+
+  .flourish::before {
+    content: '\2767';
   }
 }
 

@@ -1,21 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FileText, Mic, Monitor, Clock, ExternalLink, BookOpen } from 'lucide-react';
+import { PenLine, Mic, Film, Clock, Bookmark, BookOpen } from 'lucide-react';
 import { Note } from '../types';
 
 const typeIcon = {
-  text: FileText,
+  text: PenLine,
   voice: Mic,
-  screen: Monitor,
-};
-
-const sourceTypeLabels: Record<string, string> = {
-  podcast: 'Podcast',
-  article: 'Article',
-  lecture: 'Lecture',
-  book: 'Book',
-  video: 'Video',
-  other: 'Other',
+  video: Film,
 };
 
 export default function EmbedView() {
@@ -72,15 +63,15 @@ export default function EmbedView() {
     <div className={`${bgColor} ${textColor} p-4 min-h-screen`}>
       <div className="flex items-center gap-2 mb-4">
         <BookOpen className={`w-5 h-5 ${textMuted}`} />
-        <h2 className="text-lg font-semibold">Commonplace Book</h2>
+        <h2 className="text-lg font-semibold font-serif">Commonplace Book</h2>
       </div>
 
       {notes.length === 0 ? (
-        <p className={`text-center py-8 ${textMuted} text-sm`}>No entries yet.</p>
+        <p className={`text-center py-8 ${textMuted} text-sm font-serif italic`}>No entries yet.</p>
       ) : (
         <div className="space-y-3">
           {notes.map((note) => {
-            const Icon = typeIcon[note.type];
+            const Icon = typeIcon[note.type] || PenLine;
             const date = new Date(note.created_at);
             const isExpanded = expandedId === note.id;
             const displayContent = note.type === 'text' ? note.content : note.transcription;
@@ -96,20 +87,17 @@ export default function EmbedView() {
                     <Icon className="w-3.5 h-3.5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm truncate">{note.title}</h3>
+                    <h3 className="font-semibold text-sm truncate font-serif">{note.title}</h3>
 
                     {note.source && (
-                      <p className={`text-xs ${textMuted} mt-0.5 flex items-center gap-1`}>
-                        <ExternalLink className="w-3 h-3" />
-                        {note.source_type && sourceTypeLabels[note.source_type] && (
-                          <span className="font-medium">{sourceTypeLabels[note.source_type]}:</span>
-                        )}
+                      <p className={`text-xs ${textMuted} mt-0.5 flex items-center gap-1 font-serif italic`}>
+                        <Bookmark className="w-3 h-3" />
                         <span className="truncate">{note.source}</span>
                       </p>
                     )}
 
                     {!isExpanded && displayContent && (
-                      <p className={`text-xs ${textMuted} mt-1 line-clamp-2`}>{displayContent}</p>
+                      <p className={`text-xs ${textMuted} mt-1 line-clamp-2 font-serif`}>{displayContent}</p>
                     )}
 
                     {isExpanded && (
@@ -117,16 +105,16 @@ export default function EmbedView() {
                         {note.media_url && note.type === 'voice' && (
                           <audio controls src={note.media_url} className="w-full rounded" onClick={(e) => e.stopPropagation()} />
                         )}
-                        {note.media_url && note.type === 'screen' && (
+                        {note.media_url && note.type === 'video' && (
                           <video controls src={note.media_url} className="w-full rounded bg-black" onClick={(e) => e.stopPropagation()} />
                         )}
                         {note.transcription && (
-                          <div className={`text-xs leading-relaxed p-3 rounded-lg whitespace-pre-wrap ${isDark ? 'bg-gray-700' : 'bg-parchment-100'}`}>
+                          <div className={`text-xs leading-relaxed p-3 rounded-lg whitespace-pre-wrap font-serif ${isDark ? 'bg-gray-700' : 'bg-parchment-100'}`}>
                             {note.transcription}
                           </div>
                         )}
                         {note.content && (
-                          <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                          <div className="text-sm leading-relaxed whitespace-pre-wrap font-serif">
                             {note.content}
                           </div>
                         )}
@@ -152,7 +140,7 @@ export default function EmbedView() {
         </div>
       )}
 
-      <div className={`text-center text-[10px] ${textMuted} mt-4 pt-3 border-t ${isDark ? 'border-gray-700' : 'border-parchment-200'}`}>
+      <div className={`text-center text-[10px] ${textMuted} mt-4 pt-3 border-t ${isDark ? 'border-gray-700' : 'border-parchment-200'} font-serif italic`}>
         Powered by Commonplace Book
       </div>
     </div>
