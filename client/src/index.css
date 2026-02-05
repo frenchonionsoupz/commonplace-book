@@ -4,13 +4,17 @@
 
 @layer base {
   body {
-    font-family: 'EB Garamond', Georgia, serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  .font-serif {
+    font-family: 'Georgia', 'Times New Roman', serif;
+  }
+
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'EB Garamond', Georgia, serif;
+    font-family: 'Georgia', 'Times New Roman', serif;
   }
 
   code, pre, .font-mono {

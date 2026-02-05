@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, FileText, Mic, Monitor, LayoutGrid, List } from 'lucide-react';
+import { Plus, LayoutGrid, List, Feather } from 'lucide-react';
 import { api } from '../api';
-import { Note, NoteType, TagCount } from '../types';
+import { Note, TagCount } from '../types';
 import NoteCard from '../components/NoteCard';
 import NoteEditor from '../components/NoteEditor';
 import SearchBar from '../components/SearchBar';
@@ -14,15 +14,13 @@ export default function Dashboard() {
   const [showEditor, setShowEditor] = useState(false);
   const [search, setSearch] = useState('');
   const [activeTag, setActiveTag] = useState('');
-  const [activeType, setActiveType] = useState<NoteType | ''>('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const fetchNotes = useCallback(async () => {
     try {
       const params: Record<string, string> = {};
       if (search) params.search = search;
       if (activeTag) params.tag = activeTag;
-      if (activeType) params.type = activeType;
 
       const [notesData, tagsData] = await Promise.all([
         api.getNotes(params),
@@ -35,7 +33,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [search, activeTag, activeType]);
+  }, [search, activeTag]);
 
   useEffect(() => {
     const timeout = setTimeout(fetchNotes, search ? 300 : 0);
@@ -47,13 +45,6 @@ export default function Dashboard() {
     setShowEditor(false);
     fetchNotes();
   };
-
-  const typeFilters: { value: NoteType | ''; icon: typeof FileText; label: string }[] = [
-    { value: '', icon: LayoutGrid, label: 'All' },
-    { value: 'text', icon: FileText, label: 'Text' },
-    { value: 'voice', icon: Mic, label: 'Voice' },
-    { value: 'screen', icon: Monitor, label: 'Screen' },
-  ];
 
   return (
     <div className="space-y-6">
@@ -84,24 +75,6 @@ export default function Dashboard() {
         <TagFilter tags={tags} activeTag={activeTag} onSelect={setActiveTag} />
 
         <div className="flex items-center gap-1">
-          {typeFilters.map(({ value, icon: Icon, label }) => (
-            <button
-              key={value}
-              onClick={() => setActiveType(value)}
-              title={label}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                activeType === value
-                  ? 'bg-ink-900 text-parchment-50'
-                  : 'text-ink-500 hover:bg-parchment-200'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{label}</span>
-            </button>
-          ))}
-
-          <div className="w-px h-5 bg-parchment-300 mx-2" />
-
           <button
             onClick={() => setViewMode('grid')}
             className={`btn-icon ${viewMode === 'grid' ? 'bg-parchment-200' : ''}`}
@@ -125,19 +98,21 @@ export default function Dashboard() {
         </div>
       ) : notes.length === 0 ? (
         <div className="text-center py-16">
-          <div className="text-5xl mb-4">📖</div>
-          <h3 className="text-lg font-semibold text-ink-700 mb-2">
-            {search || activeTag || activeType ? 'No notes found' : 'Your Commonplace Book is empty'}
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-amber-50 flex items-center justify-center">
+            <Feather className="w-10 h-10 text-amber-600" />
+          </div>
+          <h3 className="text-xl font-serif font-semibold text-ink-700 mb-2">
+            {search || activeTag ? 'No entries found' : 'Your Commonplace Book awaits'}
           </h3>
-          <p className="text-sm text-ink-500 mb-6 max-w-md mx-auto">
-            {search || activeTag || activeType
+          <p className="text-sm text-ink-500 mb-6 max-w-md mx-auto leading-relaxed">
+            {search || activeTag
               ? 'Try adjusting your filters or search terms.'
-              : 'Start capturing notes from podcasts, articles, lectures and more. Write them down, record your voice, or capture your screen.'}
+              : 'In the tradition of scholars past, gather your thoughts, quotes, and reflections. Let this be your personal anthology of wisdom.'}
           </p>
-          {!showEditor && !search && !activeTag && !activeType && (
+          {!showEditor && !search && !activeTag && (
             <button onClick={() => setShowEditor(true)} className="btn-primary">
-              <Plus className="w-4 h-4 inline mr-2" />
-              Create Your First Entry
+              <Feather className="w-4 h-4 inline mr-2" />
+              Begin Writing
             </button>
           )}
         </div>
@@ -145,7 +120,7 @@ export default function Dashboard() {
         <div className={
           viewMode === 'grid'
             ? 'grid grid-cols-1 md:grid-cols-2 gap-4'
-            : 'space-y-3'
+            : 'space-y-4'
         }>
           {notes.map((note) => (
             <NoteCard key={note.id} note={note} compact={viewMode === 'list'} />
@@ -155,7 +130,7 @@ export default function Dashboard() {
 
       {/* Stats footer */}
       {notes.length > 0 && (
-        <div className="text-center text-xs text-ink-400 pt-4 border-t border-parchment-200">
+        <div className="text-center text-xs text-ink-400 pt-4 border-t border-parchment-200 font-serif italic">
           {notes.length} {notes.length === 1 ? 'entry' : 'entries'} in your commonplace book
         </div>
       )}
