@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import NoteView from './pages/NoteView';
 import EmbedView from './pages/EmbedView';
 import AuthPage from './pages/AuthPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -23,6 +24,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/embed" element={<EmbedView />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       {user ? (
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
