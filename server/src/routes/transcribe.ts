@@ -60,20 +60,39 @@ async function transcribeWithWhisper(filePath: string): Promise<string> {
     throw new Error('OPENAI_API_KEY not configured');
   }
 
+  // Log key format for debugging (only first/last 4 chars)
+  const keyPreview = apiKey.length > 8
+    ? `${apiKey.substring(0, 7)}...${apiKey.substring(apiKey.length - 4)}`
+    : '[too short]';
+  console.log('Using API key:', keyPreview);
   console.log('Transcribing file:', filePath);
+  console.log('File exists:', fs.existsSync(filePath));
   console.log('File size:', fs.statSync(filePath).size, 'bytes');
 
-  const { default: OpenAI } = await import('openai');
-  const openai = new OpenAI({ apiKey });
+  try {
+    const { default: OpenAI } = await import('openai');
+    const openai = new OpenAI({ apiKey });
 
-  const transcription = await openai.audio.transcriptions.create({
-    file: fs.createReadStream(filePath),
-    model: 'whisper-1',
-    response_format: 'text',
-  });
+    const transcription = await openai.audio.transcriptions.create({
+      file: fs.createReadStream(filePath),
+      model: 'whisper-1',
+      response_format: 'text',
+    });
 
-  console.log('Transcription successful, length:', (transcription as unknown as string).length);
-  return transcription as unknown as string;
+    console.log('Transcription successful, length:', (transcription as unknown as string).length);
+    return transcription as unknown as string;
+  } catch (error: any) {
+    // Log full error details
+    console.error('OpenAI API Error Details:');
+    console.error('- Message:', error.message);
+    console.error('- Status:', error.status);
+    console.error('- Code:', error.code);
+    console.error('- Type:', error.type);
+    if (error.error) {
+      console.error('- Error body:', JSON.stringify(error.error));
+    }
+    throw error;
+  }
 }
 
 // POST /api/transcribe — transcribe audio using OpenAI Whisper
