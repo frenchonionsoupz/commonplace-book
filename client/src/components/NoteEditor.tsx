@@ -74,36 +74,35 @@ export default function NoteEditor({ note, onSave, onCancel }: Props) {
     { type: 'video', icon: Film, label: 'Video', description: 'Upload & transcribe' },
   ];
 
-  // Step 1: Type picker
+  // Step 1: Type picker - fullscreen on mobile
   if (!selectedType && !isEditing) {
     return (
-      <div className="entry-card p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2 text-parchment-800">
-            <PenLine className="w-5 h-5" />
-            <h2 className="text-lg font-semibold font-serif">New Entry</h2>
-          </div>
-          <button onClick={onCancel} className="btn-icon">
-            <X className="w-5 h-5" />
+      <div className="fixed inset-0 z-50 bg-parchment-50 flex flex-col md:relative md:inset-auto md:z-auto md:bg-transparent">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-parchment-200 md:border-0 md:p-6 md:pb-2">
+          <h2 className="text-xl font-semibold font-serif text-ink-800">New Entry</h2>
+          <button onClick={onCancel} className="p-2 -mr-2 text-ink-500 hover:text-ink-700">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
-        <p className="text-ink-500 mb-6 text-center font-serif italic">
+        <p className="text-ink-500 px-4 pt-4 pb-2 text-center font-serif italic md:px-6">
           Choose how you'd like to capture this thought
         </p>
 
-        <div className="grid grid-cols-3 gap-4">
+        {/* Type options - fullscreen vertical stack on mobile, grid on desktop */}
+        <div className="flex-1 flex flex-col justify-center gap-4 p-6 md:flex-none md:grid md:grid-cols-3 md:gap-4">
           {typeOptions.map(({ type, icon: Icon, label, description }) => (
             <button
               key={type}
               onClick={() => setSelectedType(type)}
-              className="flex flex-col items-center p-6 rounded-lg border-2 border-parchment-200 bg-parchment-50/50 hover:border-parchment-500 hover:bg-parchment-100 transition-all group"
+              className="flex-1 md:flex-none flex flex-col items-center justify-center p-6 md:p-6 rounded-xl border-2 border-parchment-200 bg-white hover:border-parchment-500 hover:bg-parchment-50 transition-all group active:scale-[0.98]"
             >
-              <div className="w-14 h-14 rounded-full bg-parchment-100 flex items-center justify-center mb-3 group-hover:bg-parchment-200 transition-colors">
-                <Icon className="w-7 h-7 text-parchment-700" />
+              <div className="w-20 h-20 md:w-14 md:h-14 rounded-full bg-parchment-100 flex items-center justify-center mb-4 md:mb-3 group-hover:bg-parchment-200 transition-colors">
+                <Icon className="w-10 h-10 md:w-7 md:h-7 text-parchment-700" />
               </div>
-              <span className="font-semibold text-ink-800 font-serif">{label}</span>
-              <span className="text-xs text-ink-500 mt-1 text-center">{description}</span>
+              <span className="text-xl md:text-base font-semibold text-ink-800 font-serif">{label}</span>
+              <span className="text-sm md:text-xs text-ink-500 mt-2 md:mt-1 text-center">{description}</span>
             </button>
           ))}
         </div>
