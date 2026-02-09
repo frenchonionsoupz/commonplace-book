@@ -1,14 +1,16 @@
 import { Outlet, Link } from 'react-router-dom';
-import { BookOpen, Code, Mail, LogOut } from 'lucide-react';
+import { BookOpen, Code, Mail, User } from 'lucide-react';
 import { useState } from 'react';
 import EmbedCodeModal from './EmbedCodeModal';
 import EmailExportModal from './EmailExportModal';
+import AccountModal from './AccountModal';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [showEmbed, setShowEmbed] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
 
   return (
     <div className="min-h-screen bg-parchment-50">
@@ -43,11 +45,11 @@ export default function Layout() {
               <span className="hidden sm:inline">Embed</span>
             </button>
             <button
-              onClick={logout}
+              onClick={() => setShowAccount(true)}
               className="btn-icon"
-              title="Sign out"
+              title="Account settings"
             >
-              <LogOut className="w-5 h-5" />
+              <User className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -65,6 +67,7 @@ export default function Layout() {
 
       {showEmbed && <EmbedCodeModal onClose={() => setShowEmbed(false)} />}
       {showExport && <EmailExportModal onClose={() => setShowExport(false)} />}
+      {showAccount && <AccountModal onClose={() => setShowAccount(false)} />}
     </div>
   );
 }

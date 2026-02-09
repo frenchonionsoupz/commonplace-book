@@ -151,4 +151,74 @@ router.post('/email', async (req: AuthRequest, res: Response) => {
   }
 });
 
+// GET /api/export/download - Download all entries as JSON or Markdown
+router.get('/download', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    const format = (req.query.format as string) || 'json';
+
+    const result = await pool.query(
+      'SELECT * FROM notes WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+
+    // Get tags for all notes
+    const entries = await Promise.all(result.rows.map(async (note: any) => ({
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      transcription: note.transcription,
+      type: note.type,
+      source: note.source,
+      tags: await getNoteTags(note.id),
+      created_at: note.created_at,
+      updated_at: note.updated_at,
+    })));
+
+    if (format === 'markdown') {
+      // Generate Markdown
+      let markdown = `# My Commonplace Book\n\nExported on ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\n\n---\n\n`;
+
+      for (const entry of entries) {
+        const date = new Date(entry.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+        const content = entry.content || entry.transcription || '';
+        const typeLabel = entry.type === 'text' ? '📝' : entry.type === 'voice' ? '🎙️' : '🎬';
+
+        markdown += `## ${entry.title}\n\n`;
+        markdown += `*${typeLabel} ${entry.type} • ${date}*\n\n`;
+        markdown += `${content}\n\n`;
+        if (entry.source) {
+          markdown += `**Source:** ${entry.source}\n\n`;
+        }
+        if (entry.tags.length > 0) {
+          markdown += `**Tags:** ${entry.tags.join(', ')}\n\n`;
+        }
+        markdown += `---\n\n`;
+      }
+
+      res.setHeader('Content-Type', 'text/markdown');
+      res.setHeader('Content-Disposition', 'attachment; filename="commonplace-book.md"');
+      res.send(markdown);
+    } else {
+      // JSON format
+      const exportData = {
+        exported_at: new Date().toISOString(),
+        total_entries: entries.length,
+        entries,
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="commonplace-book.json"');
+      res.json(exportData);
+    }
+  } catch (error) {
+    console.error('Download error:', error);
+    res.status(500).json({ error: 'Failed to generate download' });
+  }
+});
+
 export default router;

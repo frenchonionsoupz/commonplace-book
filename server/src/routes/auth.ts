@@ -104,4 +104,36 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// DELETE /api/auth/account - Delete account and all data
+router.delete('/account', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { confirmEmail } = req.body;
+    const userId = req.userId;
+
+    // Get user email for confirmation
+    const userResult = await pool.query('SELECT email FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userEmail = userResult.rows[0].email;
+
+    // Require email confirmation to prevent accidents
+    if (!confirmEmail || confirmEmail.toLowerCase() !== userEmail.toLowerCase()) {
+      return res.status(400).json({ error: 'Please type your email address to confirm deletion' });
+    }
+
+    // Delete all user's notes (cascade will handle note_tags)
+    await pool.query('DELETE FROM notes WHERE user_id = $1', [userId]);
+
+    // Delete the user
+    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    res.json({ success: true, message: 'Account and all data deleted' });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
 export default router;

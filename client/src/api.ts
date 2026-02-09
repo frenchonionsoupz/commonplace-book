@@ -142,4 +142,34 @@ export const api = {
       body: JSON.stringify({ email, filter }),
     });
   },
+
+  // Download entries as file
+  async downloadEntries(format: 'json' | 'markdown' = 'json') {
+    const token = getToken();
+    const res = await fetch(`${BASE}/export/download?format=${format}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error('Download failed');
+
+    const blob = await res.blob();
+    const filename = format === 'markdown' ? 'commonplace-book.md' : 'commonplace-book.json';
+
+    // Trigger download
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  // Delete account
+  deleteAccount(confirmEmail: string) {
+    return request<{ success: boolean; message: string }>('/auth/account', {
+      method: 'DELETE',
+      body: JSON.stringify({ confirmEmail }),
+    });
+  },
 };
