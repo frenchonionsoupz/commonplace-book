@@ -6,6 +6,7 @@ import NoteView from './pages/NoteView';
 import EmbedView from './pages/EmbedView';
 import AuthPage from './pages/AuthPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import InstallPrompt from './components/InstallPrompt';
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -41,6 +42,7 @@ export default function App() {
   return (
     <AuthProvider>
       <AppRoutes />
+      <InstallPrompt />
     </AuthProvider>
   );
 }
