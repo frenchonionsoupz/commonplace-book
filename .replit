@@ -15,7 +15,7 @@ SMTP_PORT = "587"
 SMTP_USER = "info@thecommonplacebook.app"
 SMTP_PASS = "Sirfartsalot123!"
 FROM_EMAIL = "info@thecommonplacebook.app"
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 
 [userenv.development]
 PORT = "3001"
