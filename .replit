@@ -10,6 +10,12 @@ channel = "stable-25_05"
 
 [userenv.shared]
 CLIENT_URL = "https://6caf622b-e52f-4f62-a536-298aa7b0d902-00-2lapz21bh26yk.worf.replit.dev"
+OPENAI_API_KEY = "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"
+SMTP_HOST = "mail.privateemail.com"
+SMTP_PORT = "587"
+SMTP_USER = "info@thecommonplacebook.app"
+SMTP_PASS = "Sirfartsalot123!"
+FROM_EMAIL = "info@thecommonplacebook.app"
 
 [userenv.development]
 PORT = "3001"
