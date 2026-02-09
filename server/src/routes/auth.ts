@@ -271,4 +271,35 @@ router.delete('/account', authMiddleware, async (req: AuthRequest, res: Response
   }
 });
 
+// GET /api/auth/health - Database health check (for debugging data issues)
+router.get('/health', async (_req: Request, res: Response) => {
+  try {
+    const userCount = await pool.query('SELECT COUNT(*) as count FROM users');
+    const noteCount = await pool.query('SELECT COUNT(*) as count FROM notes');
+    const schemaVersion = await pool.query(
+      'SELECT version, applied_at FROM schema_versions ORDER BY version DESC LIMIT 1'
+    ).catch(() => ({ rows: [] }));
+
+    res.json({
+      status: 'healthy',
+      database: {
+        connected: true,
+        users: parseInt(userCount.rows[0].count),
+        notes: parseInt(noteCount.rows[0].count),
+        schemaVersion: schemaVersion.rows[0]?.version || 'unknown',
+        lastMigration: schemaVersion.rows[0]?.applied_at || 'unknown'
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({
+      status: 'unhealthy',
+      database: { connected: false },
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 export default router;
