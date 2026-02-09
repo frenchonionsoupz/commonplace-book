@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { BookOpen, Lock, ArrowRight, Check } from 'lucide-react';
+import { Lock, ArrowRight, Check } from 'lucide-react';
 import { api } from '../api';
+import Logo from '../components/Logo';
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -66,9 +67,9 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-parchment-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 text-parchment-800 mb-2">
-              <BookOpen className="w-8 h-8" />
-              <h1 className="text-3xl font-serif font-semibold tracking-wide">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Logo size={48} />
+              <h1 className="text-3xl font-serif font-semibold tracking-wide text-ink-800">
                 Commonplace Book
               </h1>
             </div>
@@ -100,9 +101,9 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 text-parchment-800 mb-2">
-            <BookOpen className="w-8 h-8" />
-            <h1 className="text-3xl font-serif font-semibold tracking-wide">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <Logo size={48} />
+            <h1 className="text-3xl font-serif font-semibold tracking-wide text-ink-800">
               Commonplace Book
             </h1>
           </div>

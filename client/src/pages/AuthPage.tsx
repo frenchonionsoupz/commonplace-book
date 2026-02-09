@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { BookOpen, Mail, Lock, User, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
+import Logo from '../components/Logo';
 
 type Mode = 'login' | 'signup' | 'forgot';
 
@@ -57,9 +58,9 @@ export default function AuthPage() {
       <div className="min-h-screen bg-parchment-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 text-parchment-800 mb-2">
-              <BookOpen className="w-8 h-8" />
-              <h1 className="text-3xl font-serif font-semibold tracking-wide">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Logo size={48} />
+              <h1 className="text-3xl font-serif font-semibold tracking-wide text-ink-800">
                 Commonplace Book
               </h1>
             </div>
@@ -91,9 +92,9 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 text-parchment-800 mb-2">
-            <BookOpen className="w-8 h-8" />
-            <h1 className="text-3xl font-serif font-semibold tracking-wide">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <Logo size={48} />
+            <h1 className="text-3xl font-serif font-semibold tracking-wide text-ink-800">
               Commonplace Book
             </h1>
           </div>

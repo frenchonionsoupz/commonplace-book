@@ -1,19 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
-  <rect width="192" height="192" rx="24" fill="#8b7355"/>
-  <g transform="translate(32, 28)">
-    <!-- Book shape -->
-    <path d="M64 8 L120 16 L120 128 L64 120 L64 8 Z" fill="#faf8f5" stroke="#5c4a3a" stroke-width="2"/>
-    <path d="M64 8 L8 16 L8 128 L64 120 L64 8 Z" fill="#f5f0e8" stroke="#5c4a3a" stroke-width="2"/>
-    <!-- Spine -->
-    <line x1="64" y1="8" x2="64" y2="120" stroke="#5c4a3a" stroke-width="3"/>
-    <!-- Text lines on left page -->
-    <line x1="20" y1="36" x2="52" y2="34" stroke="#8b7355" stroke-width="2" opacity="0.6"/>
-    <line x1="20" y1="52" x2="52" y2="50" stroke="#8b7355" stroke-width="2" opacity="0.6"/>
-    <line x1="20" y1="68" x2="52" y2="66" stroke="#8b7355" stroke-width="2" opacity="0.6"/>
-    <line x1="20" y1="84" x2="44" y2="82" stroke="#8b7355" stroke-width="2" opacity="0.6"/>
-    <!-- Text lines on right page -->
-    <line x1="76" y1="34" x2="108" y2="36" stroke="#8b7355" stroke-width="2" opacity="0.6"/>
-    <line x1="76" y1="50" x2="108" y2="52" stroke="#8b7355" stroke-width="2" opacity="0.6"/>
-    <line x1="76" y1="66" x2="108" y2="68" stroke="#8b7355" stroke-width="2" opacity="0.6"/>
+  <rect width="192" height="192" rx="24" fill="#f5f2ed"/>
+  <g transform="translate(36, 30) scale(1.2)">
+    <!-- Book cover - front -->
+    <path d="M30 20 L80 25 L80 85 L30 80 Z" fill="#c27c5c"/>
+    <!-- Book spine -->
+    <path d="M20 22 L30 20 L30 80 L20 82 Z" fill="#9a6648"/>
+    <!-- Book pages - top -->
+    <path d="M20 22 L30 20 L80 25 L70 23 L22 19 Z" fill="#e8ddd0" stroke="#9a6648" stroke-width="1"/>
+    <!-- Spine edge -->
+    <line x1="30" y1="20" x2="30" y2="80" stroke="#7d5339" stroke-width="2"/>
   </g>
 </svg>

@@ -1,9 +1,10 @@
 import { Outlet, Link } from 'react-router-dom';
-import { BookOpen, Code, Mail, User } from 'lucide-react';
+import { Code, Mail, User } from 'lucide-react';
 import { useState } from 'react';
 import EmbedCodeModal from './EmbedCodeModal';
 import EmailExportModal from './EmailExportModal';
 import AccountModal from './AccountModal';
+import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
@@ -17,9 +18,7 @@ export default function Layout() {
       <header className="border-b border-parchment-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="p-2 rounded-lg bg-parchment-100 group-hover:bg-parchment-200 transition-colors">
-              <BookOpen className="w-6 h-6 text-parchment-700" />
-            </div>
+            <Logo size={40} className="group-hover:opacity-80 transition-opacity" />
             <div>
               <h1 className="text-xl font-serif font-semibold text-ink-900 tracking-wide leading-tight">
                 Commonplace Book
