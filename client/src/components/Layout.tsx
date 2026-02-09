@@ -1,10 +1,14 @@
 import { Outlet, Link } from 'react-router-dom';
-import { BookOpen, Code } from 'lucide-react';
+import { BookOpen, Code, Mail, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import EmbedCodeModal from './EmbedCodeModal';
+import EmailExportModal from './EmailExportModal';
+import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
+  const { user, logout } = useAuth();
   const [showEmbed, setShowEmbed] = useState(false);
+  const [showExport, setShowExport] = useState(false);
 
   return (
     <div className="min-h-screen bg-parchment-50">
@@ -19,17 +23,33 @@ export default function Layout() {
                 Commonplace Book
               </h1>
               <p className="text-xs text-ink-500 leading-tight font-serif italic">
-                A personal anthology of wisdom
+                {user?.name || user?.email || 'A personal anthology of wisdom'}
               </p>
             </div>
           </Link>
-          <button
-            onClick={() => setShowEmbed(true)}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <Code className="w-4 h-4" />
-            <span className="hidden sm:inline">Embed</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowExport(true)}
+              className="btn-icon"
+              title="Email entries to yourself"
+            >
+              <Mail className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setShowEmbed(true)}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <Code className="w-4 h-4" />
+              <span className="hidden sm:inline">Embed</span>
+            </button>
+            <button
+              onClick={logout}
+              className="btn-icon"
+              title="Sign out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -44,6 +64,7 @@ export default function Layout() {
       </footer>
 
       {showEmbed && <EmbedCodeModal onClose={() => setShowEmbed(false)} />}
+      {showExport && <EmailExportModal onClose={() => setShowExport(false)} />}
     </div>
   );
 }

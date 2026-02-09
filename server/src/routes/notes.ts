@@ -1,10 +1,11 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import pool from '../db';
+import { authMiddleware, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-function paramId(req: Request): string {
+function paramId(req: AuthRequest): string {
   const id = req.params.id;
   return Array.isArray(id) ? id[0] : id;
 }
@@ -52,17 +53,17 @@ async function syncNoteTags(noteId: string, tagNames: string[]) {
   }
 }
 
-router.get('/', async (req: Request, res: Response) => {
+// All routes require authentication
+router.use(authMiddleware);
+
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
-    const { search, tag, type, public_only, limit } = req.query;
+    const { search, tag, type, limit } = req.query;
+    const userId = req.userId;
 
-    let query = 'SELECT * FROM notes WHERE 1=1';
-    const params: any[] = [];
-    let paramIndex = 1;
-
-    if (public_only === 'true') {
-      query += ' AND is_public = TRUE';
-    }
+    let query = 'SELECT * FROM notes WHERE user_id = $1';
+    const params: any[] = [userId];
+    let paramIndex = 2;
 
     if (type) {
       query += ` AND type = $${paramIndex++}`;
@@ -108,9 +109,12 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
-    const result = await pool.query('SELECT * FROM notes WHERE id = $1', [paramId(req)]);
+    const result = await pool.query(
+      'SELECT * FROM notes WHERE id = $1 AND user_id = $2',
+      [paramId(req), req.userId]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Note not found' });
@@ -127,9 +131,10 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', async (req: AuthRequest, res: Response) => {
   try {
     const { title, content, type, source, media_url, transcription, tags, is_public } = req.body;
+    const userId = req.userId;
 
     if (!type) {
       return res.status(400).json({ error: 'Type is required' });
@@ -140,10 +145,11 @@ router.post('/', async (req: Request, res: Response) => {
     const finalTitle = title || deriveTitle(content || '', transcription || '', type);
 
     await pool.query(`
-      INSERT INTO notes (id, title, content, type, source, media_url, transcription, created_at, updated_at, is_public)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      INSERT INTO notes (id, user_id, title, content, type, source, media_url, transcription, created_at, updated_at, is_public)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     `, [
       id,
+      userId,
       finalTitle,
       content || '',
       type,
@@ -172,10 +178,13 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const id = paramId(req);
-    const existing = await pool.query('SELECT * FROM notes WHERE id = $1', [id]);
+    const existing = await pool.query(
+      'SELECT * FROM notes WHERE id = $1 AND user_id = $2',
+      [id, req.userId]
+    );
 
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Note not found' });
@@ -193,7 +202,7 @@ router.put('/:id', async (req: Request, res: Response) => {
         transcription = COALESCE($5, transcription),
         is_public = COALESCE($6, is_public),
         updated_at = $7
-      WHERE id = $8
+      WHERE id = $8 AND user_id = $9
     `, [
       title ?? null,
       content ?? null,
@@ -202,7 +211,8 @@ router.put('/:id', async (req: Request, res: Response) => {
       transcription ?? null,
       is_public ?? null,
       now,
-      id
+      id,
+      req.userId
     ]);
 
     if (tags && Array.isArray(tags)) {
@@ -222,10 +232,13 @@ router.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const id = paramId(req);
-    const existing = await pool.query('SELECT * FROM notes WHERE id = $1', [id]);
+    const existing = await pool.query(
+      'SELECT * FROM notes WHERE id = $1 AND user_id = $2',
+      [id, req.userId]
+    );
 
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Note not found' });
@@ -239,15 +252,17 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/meta/tags', async (_req: Request, res: Response) => {
+router.get('/meta/tags', async (req: AuthRequest, res: Response) => {
   try {
     const result = await pool.query(`
       SELECT t.name, COUNT(nt.note_id) as count
       FROM tags t
       LEFT JOIN note_tags nt ON nt.tag_id = t.id
+      LEFT JOIN notes n ON n.id = nt.note_id
+      WHERE n.user_id = $1
       GROUP BY t.id
       ORDER BY count DESC
-    `);
+    `, [req.userId]);
 
     res.json(result.rows);
   } catch (error) {
