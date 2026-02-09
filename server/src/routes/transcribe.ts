@@ -71,13 +71,19 @@ async function transcribeWithWhisper(filePath: string): Promise<string> {
 
   try {
     const { default: OpenAI } = await import('openai');
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({
+      apiKey,
+      timeout: 120000, // 2 minute timeout
+      maxRetries: 3,   // Retry up to 3 times on network errors
+    });
 
+    console.log('Sending to OpenAI Whisper API...');
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream(filePath),
       model: 'whisper-1',
       response_format: 'text',
     });
+    console.log('OpenAI API response received');
 
     console.log('Transcription successful, length:', (transcription as unknown as string).length);
     return transcription as unknown as string;
