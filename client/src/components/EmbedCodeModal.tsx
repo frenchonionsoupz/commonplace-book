@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { X, Copy, Check } from 'lucide-react';
 
 interface Props {
+  userId: string;
   onClose: () => void;
 }
 
-export default function EmbedCodeModal({ onClose }: Props) {
+export default function EmbedCodeModal({ userId, onClose }: Props) {
   const [copied, setCopied] = useState(false);
   const [tag, setTag] = useState('');
   const [type, setType] = useState('');
@@ -15,7 +16,8 @@ export default function EmbedCodeModal({ onClose }: Props) {
   const host = window.location.origin;
   const embedCode = `<!-- Commonplace Book Widget -->
 <div id="commonplace-book"
-  data-host="${host}"${tag ? `\n  data-tag="${tag}"` : ''}${type ? `\n  data-type="${type}"` : ''}
+  data-host="${host}"
+  data-user-id="${userId}"${tag ? `\n  data-tag="${tag}"` : ''}${type ? `\n  data-type="${type}"` : ''}
   data-limit="${limit}"
   data-theme="${theme}">
 </div>

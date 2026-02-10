@@ -80,18 +80,24 @@ router.post('/video', upload.single('file'), async (req: Request, res: Response)
     return res.json({ url: fileUrl, transcription: '', message: 'No OPENAI_API_KEY configured.' });
   }
 
+  let audioPath: string | null = null;
+
   try {
     const isVideo = req.file.mimetype?.startsWith('video/') || /\.(mp4|webm|mov|avi|mkv)$/i.test(req.file.originalname);
-    const audioPath = isVideo ? await extractAudio(req.file.path) : req.file.path;
+    console.log(`Video upload: ${req.file.originalname} (${req.file.mimetype}), isVideo=${isVideo}`);
 
-    const transcription = await transcribe(audioPath);
+    if (isVideo) {
+      audioPath = await extractAudio(req.file.path);
+      console.log(`Audio extracted: ${audioPath} (${fs.statSync(audioPath).size} bytes)`);
+    }
 
-    if (audioPath !== req.file.path && fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
-
+    const transcription = await transcribe(audioPath || req.file.path);
     res.json({ url: fileUrl, transcription });
   } catch (error: any) {
     console.error('Video transcription error:', error.message);
     res.status(500).json({ url: fileUrl, error: 'Transcription failed', message: error.message });
+  } finally {
+    if (audioPath && fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
   }
 });
 

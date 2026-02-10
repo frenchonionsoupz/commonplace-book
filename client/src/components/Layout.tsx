@@ -64,7 +64,7 @@ export default function Layout() {
         </p>
       </footer>
 
-      {showEmbed && <EmbedCodeModal onClose={() => setShowEmbed(false)} />}
+      {showEmbed && user && <EmbedCodeModal userId={user.id} onClose={() => setShowEmbed(false)} />}
       {showExport && <EmailExportModal onClose={() => setShowExport(false)} />}
       {showAccount && <AccountModal onClose={() => setShowAccount(false)} />}
     </div>

@@ -19,8 +19,14 @@ export default function EmbedView() {
   const isDark = theme === 'dark';
 
   useEffect(() => {
+    const userId = searchParams.get('user_id');
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
     const params = new URLSearchParams();
-    params.set('public_only', 'true');
+    params.set('user_id', userId);
     const tag = searchParams.get('tag');
     const type = searchParams.get('type');
     const limit = searchParams.get('limit');
@@ -28,7 +34,7 @@ export default function EmbedView() {
     if (type) params.set('type', type);
     if (limit) params.set('limit', limit);
 
-    fetch(`/api/notes?${params}`)
+    fetch(`/api/embed/notes?${params}`)
       .then((r) => r.json())
       .then(setNotes)
       .catch(console.error)

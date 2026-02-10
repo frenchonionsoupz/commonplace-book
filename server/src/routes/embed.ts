@@ -14,10 +14,15 @@ async function getNoteTags(noteId: string): Promise<string[]> {
 
 router.get('/notes', async (req: Request, res: Response) => {
   try {
-    const { tag, type, limit } = req.query;
-    let query = 'SELECT * FROM notes WHERE is_public = TRUE';
-    const params: any[] = [];
-    let paramIndex = 1;
+    const { user_id, tag, type, limit } = req.query;
+
+    if (!user_id) {
+      return res.status(400).json({ error: 'user_id is required' });
+    }
+
+    let query = 'SELECT * FROM notes WHERE user_id = $1 AND is_public = TRUE';
+    const params: any[] = [user_id];
+    let paramIndex = 2;
 
     if (type) {
       query += ` AND type = $${paramIndex++}`;
@@ -66,18 +71,26 @@ router.get('/script', (_req: Request, res: Response) => {
   }
 
   var host = container.getAttribute('data-host') || window.location.origin;
+  var userId = container.getAttribute('data-user-id') || '';
   var tag = container.getAttribute('data-tag') || '';
   var type = container.getAttribute('data-type') || '';
   var limit = container.getAttribute('data-limit') || '20';
   var theme = container.getAttribute('data-theme') || 'light';
 
+  if (!userId) {
+    console.error('Commonplace Book: data-user-id attribute is required.');
+    return;
+  }
+
   var params = new URLSearchParams();
+  params.set('user_id', userId);
   if (tag) params.set('tag', tag);
   if (type) params.set('type', type);
   if (limit) params.set('limit', limit);
+  params.set('theme', theme);
 
   var iframe = document.createElement('iframe');
-  iframe.src = host + '/embed?' + params.toString() + '&theme=' + theme;
+  iframe.src = host + '/embed?' + params.toString();
   iframe.style.width = '100%';
   iframe.style.minHeight = '600px';
   iframe.style.border = 'none';
