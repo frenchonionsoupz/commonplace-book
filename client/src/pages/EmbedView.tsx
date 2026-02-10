@@ -19,7 +19,14 @@ export default function EmbedView() {
   const isDark = theme === 'dark';
 
   useEffect(() => {
+    const userId = searchParams.get('user_id');
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
     const params = new URLSearchParams();
+    params.set('user_id', userId);
     const tag = searchParams.get('tag');
     const type = searchParams.get('type');
     const limit = searchParams.get('limit');

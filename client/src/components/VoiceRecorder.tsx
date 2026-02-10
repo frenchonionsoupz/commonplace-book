@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Mic, Square, Loader2 } from 'lucide-react';
+import { api } from '../api';
 
 interface Props {
   onRecordingComplete: (blob: Blob, transcription: string) => void;
@@ -61,9 +62,8 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
         recognition.start();
       }
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4',
-      });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
@@ -72,7 +72,7 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
       };
 
       mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType });
+        const blob = new Blob(chunksRef.current, { type: mimeType });
         stream.getTracks().forEach((t) => t.stop());
 
         // Stop speech recognition
@@ -80,59 +80,31 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
         recognitionRef.current = null;
 
         const browserTranscript = transcriptRef.current.trim();
+        const ext = mimeType.includes('webm') ? 'webm' : 'mp4';
 
-        if (browserTranscript) {
-          // Upload audio to server and wait for the media URL before completing
-          setIsTranscribing(true);
-          try {
-            const formData = new FormData();
-            formData.append('audio', blob, `voice-note.${blob.type.includes('webm') ? 'webm' : 'mp4'}`);
-            const uploadRes = await fetch('/api/transcribe', { method: 'POST', body: formData });
-            const data = await uploadRes.json();
-            if (data.url) callbacksRef.current.onMediaUrl?.(data.url);
-          } catch {
-            // Upload failed — continue with transcript anyway
-          }
-          setIsTranscribing(false);
-
-          callbacksRef.current.onRecordingComplete(blob, browserTranscript);
-          return;
-        }
-
-        // No browser transcript available — fall back to server-side transcription
+        // Upload audio to server and wait for the media URL before completing
         setIsTranscribing(true);
-
         try {
-          const formData = new FormData();
-          formData.append('audio', blob, `voice-note.${blob.type.includes('webm') ? 'webm' : 'mp4'}`);
-          const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
-          const data = await res.json();
-
+          const data = await api.transcribe(blob, `voice-note.${ext}`);
           if (data.url) callbacksRef.current.onMediaUrl?.(data.url);
-
-          if (data.transcription) {
-            callbacksRef.current.onRecordingComplete(blob, data.transcription);
-            setIsTranscribing(false);
-            return;
-          }
+          // Use browser transcript if available (instant), otherwise use server transcription
+          const transcript = browserTranscript || data.transcription || '';
+          callbacksRef.current.onRecordingComplete(blob, transcript);
         } catch {
-          // Fall through
+          // Upload failed — use browser transcript if we have one
+          callbacksRef.current.onRecordingComplete(blob, browserTranscript || '(Transcription failed)');
+        } finally {
+          setIsTranscribing(false);
         }
-
-        callbacksRef.current.onRecordingComplete(blob, '(No speech detected)');
-        setIsTranscribing(false);
       };
 
-      mediaRecorder.start(1000); // collect data every second
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setDuration(0);
       setLiveTranscript('');
       transcriptRef.current = '';
-
-      timerRef.current = window.setInterval(() => {
-        setDuration((d) => d + 1);
-      }, 1000);
-    } catch (err: any) {
+      timerRef.current = window.setInterval(() => setDuration((d) => d + 1), 1000);
+    } catch {
       alert('Microphone access denied. Please allow microphone access to record voice notes.');
     }
   }, []);
@@ -147,11 +119,7 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
     }
   }, []);
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
   if (isTranscribing) {
     return (
