@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Mic, Square, Loader2 } from 'lucide-react';
+import { api } from '../api';
 
 interface Props {
   onRecordingComplete: (blob: Blob, transcription: string) => void;
@@ -20,9 +21,8 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4',
-      });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
@@ -31,43 +31,27 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
       };
 
       mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType });
+        const blob = new Blob(chunksRef.current, { type: mimeType });
         stream.getTracks().forEach((t) => t.stop());
-
         setIsTranscribing(true);
 
-        // Try server-side transcription first
         try {
-          const formData = new FormData();
-          formData.append('audio', blob, `voice-note.${blob.type.includes('webm') ? 'webm' : 'mp4'}`);
-          const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
-          const data = await res.json();
-
+          const ext = mimeType.includes('webm') ? 'webm' : 'mp4';
+          const data = await api.transcribe(blob, `voice-note.${ext}`);
           if (data.url) onMediaUrl?.(data.url);
-
-          if (data.transcription) {
-            onRecordingComplete(blob, data.transcription);
-            setIsTranscribing(false);
-            return;
-          }
+          onRecordingComplete(blob, data.transcription || '');
         } catch {
-          // Fall through to browser transcription
+          onRecordingComplete(blob, '(Transcription failed)');
+        } finally {
+          setIsTranscribing(false);
         }
-
-        // Fallback: browser Web Speech API
-        const transcription = await browserTranscribe(blob);
-        onRecordingComplete(blob, transcription);
-        setIsTranscribing(false);
       };
 
-      mediaRecorder.start(1000); // collect data every second
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setDuration(0);
-
-      timerRef.current = window.setInterval(() => {
-        setDuration((d) => d + 1);
-      }, 1000);
-    } catch (err: any) {
+      timerRef.current = window.setInterval(() => setDuration((d) => d + 1), 1000);
+    } catch {
       alert('Microphone access denied. Please allow microphone access to record voice notes.');
     }
   }, [onRecordingComplete, onMediaUrl]);
@@ -82,11 +66,7 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
     }
   }, []);
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
   if (isTranscribing) {
     return (
@@ -124,57 +104,4 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
       )}
     </div>
   );
-}
-
-// Browser-based speech recognition fallback
-function browserTranscribe(blob: Blob): Promise<string> {
-  return new Promise((resolve) => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      resolve('(Browser speech recognition not available. Set OPENAI_API_KEY for server transcription.)');
-      return;
-    }
-
-    // For browser speech recognition, we play audio and let the recognition engine listen
-    // This is a simplified approach — real-time recognition during recording is more reliable
-    const audio = new Audio(URL.createObjectURL(blob));
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    let transcript = '';
-
-    recognition.onresult = (event: any) => {
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          transcript += event.results[i][0].transcript + ' ';
-        }
-      }
-    };
-
-    recognition.onend = () => {
-      resolve(transcript.trim() || '(No speech detected)');
-    };
-
-    recognition.onerror = () => {
-      resolve(transcript.trim() || '(Transcription failed. Set OPENAI_API_KEY for better results.)');
-    };
-
-    // Start recognition — note: browser speech recognition works with mic, not audio playback
-    // So this fallback mainly captures during live recording
-    recognition.start();
-    audio.play().catch(() => {});
-
-    // Stop after audio ends or timeout
-    audio.onended = () => {
-      setTimeout(() => recognition.stop(), 1000);
-    };
-
-    // Safety timeout
-    setTimeout(() => {
-      try { recognition.stop(); } catch {}
-    }, 60000);
-  });
 }
