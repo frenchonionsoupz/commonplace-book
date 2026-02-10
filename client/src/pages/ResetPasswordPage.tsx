@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Lock, ArrowRight, Check } from 'lucide-react';
+import { Lock, ArrowRight, Check, Eye, EyeOff } from 'lucide-react';
 import { api } from '../api';
 import Logo from '../components/Logo';
+import { getRandomQuote } from '../quotes';
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -14,6 +15,9 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const quote = useMemo(() => getRandomQuote(), []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,14 +130,22 @@ export default function ResetPasswordPage() {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 6 characters"
-                  className="input pl-10"
+                  className="input pl-10 pr-10"
                   required
                   minLength={6}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-600"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
@@ -144,14 +156,22 @@ export default function ResetPasswordPage() {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Type password again"
-                  className="input pl-10"
+                  className="input pl-10 pr-10"
                   required
                   minLength={6}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-600"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
@@ -180,9 +200,9 @@ export default function ResetPasswordPage() {
 
         {/* Footer */}
         <p className="text-center text-ink-400 text-xs mt-6 font-serif italic">
-          "The true university of these days is a collection of books."
+          "{quote.text}"
           <br />
-          — Thomas Carlyle
+          — {quote.author}
         </p>
       </div>
     </div>

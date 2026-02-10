@@ -1,13 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
-  <rect width="192" height="192" rx="24" fill="#f5f2ed"/>
-  <g transform="translate(36, 30) scale(1.2)">
-    <!-- Book cover - front -->
-    <path d="M30 20 L80 25 L80 85 L30 80 Z" fill="#c27c5c"/>
-    <!-- Book spine -->
-    <path d="M20 22 L30 20 L30 80 L20 82 Z" fill="#9a6648"/>
-    <!-- Book pages - top -->
-    <path d="M20 22 L30 20 L80 25 L70 23 L22 19 Z" fill="#e8ddd0" stroke="#9a6648" stroke-width="1"/>
-    <!-- Spine edge -->
-    <line x1="30" y1="20" x2="30" y2="80" stroke="#7d5339" stroke-width="2"/>
+  <rect width="192" height="192" rx="24" fill="#faf6f1"/>
+  <g transform="translate(26, 22) scale(1.4)">
+    <!-- Shadow -->
+    <ellipse cx="50" cy="78" rx="28" ry="4" fill="rgba(0,0,0,0.06)" />
+    <!-- Left page spine edge -->
+    <path d="M48 28 C38 24 22 26 16 31 L16 69 C22 67 38 64 48 67 Z" fill="#b07050"/>
+    <!-- Left page -->
+    <path d="M48 28 C38 24 24 26 20 30 L20 68 C26 66 38 64 48 67 Z" fill="#d4956e"/>
+    <!-- Right page spine edge -->
+    <path d="M52 28 C62 24 78 26 84 31 L84 69 C78 67 62 64 52 67 Z" fill="#e0c4a8"/>
+    <!-- Right page -->
+    <path d="M52 28 C62 24 76 26 80 30 L80 68 C74 66 62 64 52 67 Z" fill="#f2e0cc"/>
+    <!-- Spine -->
+    <rect x="47" y="26" width="6" height="44" rx="2" fill="#a0603c"/>
   </g>
 </svg>

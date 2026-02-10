@@ -1,17 +1,19 @@
 import { Outlet, Link } from 'react-router-dom';
 import { Code, Mail, User } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import EmbedCodeModal from './EmbedCodeModal';
 import EmailExportModal from './EmailExportModal';
 import AccountModal from './AccountModal';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
+import { getRandomQuote } from '../quotes';
 
 export default function Layout() {
   const { user } = useAuth();
   const [showEmbed, setShowEmbed] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
+  const quote = useMemo(() => getRandomQuote(), []);
 
   return (
     <div className="min-h-screen bg-parchment-50">
@@ -60,7 +62,7 @@ export default function Layout() {
 
       <footer className="border-t border-parchment-200 py-6 mt-12">
         <p className="text-center text-xs text-ink-400 font-serif italic">
-          "I cannot live without books." — Thomas Jefferson
+          "{quote.text}" — {quote.author}
         </p>
       </footer>
 
