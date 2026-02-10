@@ -5,10 +5,12 @@ import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import OpenAI from 'openai';
 
 const execAsync = promisify(exec);
 const router = Router();
 
+// Setup uploads directory
 const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
@@ -20,39 +22,30 @@ const upload = multer({
   limits: { fileSize: 100 * 1024 * 1024 },
 });
 
+// Send audio file to OpenAI Whisper and get text back
 async function transcribe(filePath: string): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
 
-  const fileBuffer = fs.readFileSync(filePath);
-  const fileName = path.basename(filePath);
-
-  const form = new FormData();
-  form.append('file', new Blob([fileBuffer]), fileName);
-  form.append('model', 'whisper-1');
-
-  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: form,
+  const openai = new OpenAI({ apiKey });
+  const result = await openai.audio.transcriptions.create({
+    file: fs.createReadStream(filePath),
+    model: 'whisper-1',
   });
-
-  if (!res.ok) {
-    const body: any = await res.json().catch(() => ({}));
-    throw new Error(body?.error?.message || `OpenAI API error: ${res.status}`);
-  }
-
-  const data: any = await res.json();
-  return data.text;
+  return result.text;
 }
 
+// Extract audio track from video using ffmpeg
 async function extractAudio(videoPath: string): Promise<string> {
   const audioPath = videoPath.replace(/\.[^.]+$/, '.mp3');
-  await execAsync(`ffmpeg -i "${videoPath}" -vn -acodec libmp3lame -q:a 4 -y "${audioPath}"`, { timeout: 120000 });
-  if (!fs.existsSync(audioPath)) throw new Error('Audio extraction produced no output');
+  await execAsync(
+    `ffmpeg -i "${videoPath}" -vn -acodec libmp3lame -q:a 4 -y "${audioPath}"`,
+    { timeout: 180000 },
+  );
   return audioPath;
 }
 
+// POST /api/transcribe — audio transcription
 router.post('/', upload.single('audio'), async (req: Request, res: Response) => {
   if (!req.file) return res.status(400).json({ error: 'No audio file provided' });
 
@@ -71,6 +64,7 @@ router.post('/', upload.single('audio'), async (req: Request, res: Response) => 
   }
 });
 
+// POST /api/transcribe/video — video → extract audio → transcribe
 router.post('/video', upload.single('file'), async (req: Request, res: Response) => {
   if (!req.file) return res.status(400).json({ error: 'No file provided' });
 
@@ -83,12 +77,11 @@ router.post('/video', upload.single('file'), async (req: Request, res: Response)
   let audioPath: string | null = null;
 
   try {
-    const isVideo = req.file.mimetype?.startsWith('video/') || /\.(mp4|webm|mov|avi|mkv)$/i.test(req.file.originalname);
-    console.log(`Video upload: ${req.file.originalname} (${req.file.mimetype}), isVideo=${isVideo}`);
+    const isVideo = req.file.mimetype?.startsWith('video/') ||
+      /\.(mp4|webm|mov|avi|mkv)$/i.test(req.file.originalname);
 
     if (isVideo) {
       audioPath = await extractAudio(req.file.path);
-      console.log(`Audio extracted: ${audioPath} (${fs.statSync(audioPath).size} bytes)`);
     }
 
     const transcription = await transcribe(audioPath || req.file.path);
@@ -97,6 +90,7 @@ router.post('/video', upload.single('file'), async (req: Request, res: Response)
     console.error('Video transcription error:', error.message);
     res.status(500).json({ url: fileUrl, error: 'Transcription failed', message: error.message });
   } finally {
+    // Clean up extracted audio file
     if (audioPath && fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
   }
 });
