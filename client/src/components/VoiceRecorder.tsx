@@ -82,17 +82,19 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
         const browserTranscript = transcriptRef.current.trim();
 
         if (browserTranscript) {
-          // Upload audio to server in the background for file storage
-          const formData = new FormData();
-          formData.append('audio', blob, `voice-note.${blob.type.includes('webm') ? 'webm' : 'mp4'}`);
-          fetch('/api/transcribe', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => {
-              if (data.url) callbacksRef.current.onMediaUrl?.(data.url);
-            })
-            .catch(() => {});
+          // Upload audio to server and wait for the media URL before completing
+          setIsTranscribing(true);
+          try {
+            const formData = new FormData();
+            formData.append('audio', blob, `voice-note.${blob.type.includes('webm') ? 'webm' : 'mp4'}`);
+            const uploadRes = await fetch('/api/transcribe', { method: 'POST', body: formData });
+            const data = await uploadRes.json();
+            if (data.url) callbacksRef.current.onMediaUrl?.(data.url);
+          } catch {
+            // Upload failed — continue with transcript anyway
+          }
+          setIsTranscribing(false);
 
-          // Immediately return the browser transcript — no waiting
           callbacksRef.current.onRecordingComplete(blob, browserTranscript);
           return;
         }
@@ -155,7 +157,7 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
     return (
       <div className="flex items-center gap-3 p-4 bg-parchment-100 rounded-lg border border-parchment-300">
         <Loader2 className="w-5 h-5 text-ink-600 animate-spin" />
-        <span className="text-sm text-ink-600">Transcribing audio...</span>
+        <span className="text-sm text-ink-600">Saving audio...</span>
       </div>
     );
   }

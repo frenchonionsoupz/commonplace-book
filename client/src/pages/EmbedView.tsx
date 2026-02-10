@@ -20,7 +20,6 @@ export default function EmbedView() {
 
   useEffect(() => {
     const params = new URLSearchParams();
-    params.set('public_only', 'true');
     const tag = searchParams.get('tag');
     const type = searchParams.get('type');
     const limit = searchParams.get('limit');
@@ -28,7 +27,7 @@ export default function EmbedView() {
     if (type) params.set('type', type);
     if (limit) params.set('limit', limit);
 
-    fetch(`/api/notes?${params}`)
+    fetch(`/api/embed/notes?${params}`)
       .then((r) => r.json())
       .then(setNotes)
       .catch(console.error)

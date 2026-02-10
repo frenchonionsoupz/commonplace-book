@@ -171,8 +171,12 @@ router.post('/video', upload.single('file'), async (req: Request, res: Response)
         audioPath = await extractAudio(req.file.path);
         console.log('Audio extracted to:', audioPath);
       } else {
-        console.log('FFmpeg not available, sending video directly to Whisper');
-        // Whisper can handle some video formats directly
+        console.error('FFmpeg not available — cannot extract audio from video');
+        return res.status(500).json({
+          url: fileUrl,
+          error: 'Transcription failed',
+          message: 'FFmpeg is not installed. Video transcription requires FFmpeg to extract audio.',
+        });
       }
     }
 
