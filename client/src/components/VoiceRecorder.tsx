@@ -10,15 +10,56 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [duration, setDuration] = useState(0);
+  const [liveTranscript, setLiveTranscript] = useState('');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const transcriptRef = useRef('');
+  // Keep callbacks accessible after unmount for background upload
+  const callbacksRef = useRef({ onRecordingComplete, onMediaUrl });
+  callbacksRef.current = { onRecordingComplete, onMediaUrl };
 
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
+
+      // Start browser speech recognition for real-time transcription
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event: any) => {
+          let finalText = '';
+          let interimText = '';
+          for (let i = 0; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+              finalText += result[0].transcript;
+            } else {
+              interimText += result[0].transcript;
+            }
+          }
+          transcriptRef.current = finalText + interimText;
+          setLiveTranscript(finalText + interimText);
+        };
+
+        // Restart recognition if it stops unexpectedly during recording
+        recognition.onend = () => {
+          if (mediaRecorderRef.current?.state === 'recording') {
+            try { recognition.start(); } catch {}
+          }
+        };
+
+        recognition.onerror = () => {};
+        recognitionRef.current = recognition;
+        recognition.start();
+      }
 
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4',
@@ -34,35 +75,57 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
         const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType });
         stream.getTracks().forEach((t) => t.stop());
 
+        // Stop speech recognition
+        try { recognitionRef.current?.stop(); } catch {}
+        recognitionRef.current = null;
+
+        const browserTranscript = transcriptRef.current.trim();
+
+        if (browserTranscript) {
+          // Upload audio to server in the background for file storage
+          const formData = new FormData();
+          formData.append('audio', blob, `voice-note.${blob.type.includes('webm') ? 'webm' : 'mp4'}`);
+          fetch('/api/transcribe', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+              if (data.url) callbacksRef.current.onMediaUrl?.(data.url);
+            })
+            .catch(() => {});
+
+          // Immediately return the browser transcript — no waiting
+          callbacksRef.current.onRecordingComplete(blob, browserTranscript);
+          return;
+        }
+
+        // No browser transcript available — fall back to server-side transcription
         setIsTranscribing(true);
 
-        // Try server-side transcription first
         try {
           const formData = new FormData();
           formData.append('audio', blob, `voice-note.${blob.type.includes('webm') ? 'webm' : 'mp4'}`);
           const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
           const data = await res.json();
 
-          if (data.url) onMediaUrl?.(data.url);
+          if (data.url) callbacksRef.current.onMediaUrl?.(data.url);
 
           if (data.transcription) {
-            onRecordingComplete(blob, data.transcription);
+            callbacksRef.current.onRecordingComplete(blob, data.transcription);
             setIsTranscribing(false);
             return;
           }
         } catch {
-          // Fall through to browser transcription
+          // Fall through
         }
 
-        // Fallback: browser Web Speech API
-        const transcription = await browserTranscribe(blob);
-        onRecordingComplete(blob, transcription);
+        callbacksRef.current.onRecordingComplete(blob, '(No speech detected)');
         setIsTranscribing(false);
       };
 
       mediaRecorder.start(1000); // collect data every second
       setIsRecording(true);
       setDuration(0);
+      setLiveTranscript('');
+      transcriptRef.current = '';
 
       timerRef.current = window.setInterval(() => {
         setDuration((d) => d + 1);
@@ -70,7 +133,7 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
     } catch (err: any) {
       alert('Microphone access denied. Please allow microphone access to record voice notes.');
     }
-  }, [onRecordingComplete, onMediaUrl]);
+  }, []);
 
   const stopRecording = useCallback(() => {
     mediaRecorderRef.current?.stop();
@@ -98,83 +161,37 @@ export default function VoiceRecorder({ onRecordingComplete, onMediaUrl }: Props
   }
 
   return (
-    <div className="flex items-center gap-3">
-      {isRecording ? (
-        <>
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        {isRecording ? (
+          <>
+            <button
+              onClick={stopRecording}
+              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+            >
+              <Square className="w-4 h-4" />
+              Stop Recording
+            </button>
+            <div className="flex items-center gap-2 text-sm text-ink-600">
+              <div className="w-3 h-3 rounded-full bg-red-500 recording-pulse" />
+              <span className="font-mono">{formatTime(duration)}</span>
+            </div>
+          </>
+        ) : (
           <button
-            onClick={stopRecording}
-            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+            onClick={startRecording}
+            className="flex items-center gap-2 btn-secondary"
           >
-            <Square className="w-4 h-4" />
-            Stop Recording
+            <Mic className="w-4 h-4" />
+            Record Voice Note
           </button>
-          <div className="flex items-center gap-2 text-sm text-ink-600">
-            <div className="w-3 h-3 rounded-full bg-red-500 recording-pulse" />
-            <span className="font-mono">{formatTime(duration)}</span>
-          </div>
-        </>
-      ) : (
-        <button
-          onClick={startRecording}
-          className="flex items-center gap-2 btn-secondary"
-        >
-          <Mic className="w-4 h-4" />
-          Record Voice Note
-        </button>
+        )}
+      </div>
+      {isRecording && liveTranscript && (
+        <div className="p-3 bg-parchment-50 rounded-lg border border-parchment-200 text-sm text-ink-600 font-serif italic">
+          {liveTranscript}
+        </div>
       )}
     </div>
   );
-}
-
-// Browser-based speech recognition fallback
-function browserTranscribe(blob: Blob): Promise<string> {
-  return new Promise((resolve) => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      resolve('(Browser speech recognition not available. Set OPENAI_API_KEY for server transcription.)');
-      return;
-    }
-
-    // For browser speech recognition, we play audio and let the recognition engine listen
-    // This is a simplified approach — real-time recognition during recording is more reliable
-    const audio = new Audio(URL.createObjectURL(blob));
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    let transcript = '';
-
-    recognition.onresult = (event: any) => {
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          transcript += event.results[i][0].transcript + ' ';
-        }
-      }
-    };
-
-    recognition.onend = () => {
-      resolve(transcript.trim() || '(No speech detected)');
-    };
-
-    recognition.onerror = () => {
-      resolve(transcript.trim() || '(Transcription failed. Set OPENAI_API_KEY for better results.)');
-    };
-
-    // Start recognition — note: browser speech recognition works with mic, not audio playback
-    // So this fallback mainly captures during live recording
-    recognition.start();
-    audio.play().catch(() => {});
-
-    // Stop after audio ends or timeout
-    audio.onended = () => {
-      setTimeout(() => recognition.stop(), 1000);
-    };
-
-    // Safety timeout
-    setTimeout(() => {
-      try { recognition.stop(); } catch {}
-    }, 60000);
-  });
 }
