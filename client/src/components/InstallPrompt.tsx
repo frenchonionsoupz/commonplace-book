@@ -22,26 +22,32 @@ export default function InstallPrompt() {
       return;
     }
 
-    // Android/Chrome install prompt
-    const handleBeforeInstall = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
+    // Only show on mobile devices (iOS or Android)
+    const userAgent = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+    const isAndroid = /Android/.test(userAgent);
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-
-    // iOS detection
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
-
-    if (isIOS && !isInStandaloneMode) {
-      // Delay showing iOS prompt
-      setTimeout(() => setShowIOSPrompt(true), 2000);
+    if (!isIOS && !isAndroid) {
+      return;
     }
 
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-    };
+    // Android/Chrome install prompt
+    if (isAndroid) {
+      const handleBeforeInstall = (e: Event) => {
+        e.preventDefault();
+        setDeferredPrompt(e as BeforeInstallPromptEvent);
+      };
+
+      window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      };
+    }
+
+    // iOS: show manual instructions after a delay
+    if (isIOS) {
+      setTimeout(() => setShowIOSPrompt(true), 2000);
+    }
   }, []);
 
   const handleInstall = async () => {

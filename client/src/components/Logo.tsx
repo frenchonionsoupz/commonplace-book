@@ -13,32 +13,33 @@ export default function Logo({ className = '', size = 40 }: LogoProps) {
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Book cover - front */}
+      {/* Shadow */}
+      <ellipse cx="50" cy="78" rx="28" ry="4" fill="rgba(0,0,0,0.06)" />
+
+      {/* Left page spine edge (dark brown) */}
       <path
-        d="M30 20 L80 25 L80 85 L30 80 Z"
-        fill="#c27c5c"
+        d="M48 28 C38 24 22 26 16 31 L16 69 C22 67 38 64 48 67 Z"
+        fill="#b07050"
       />
-      {/* Book spine */}
+      {/* Left page (terracotta) */}
       <path
-        d="M20 22 L30 20 L30 80 L20 82 Z"
-        fill="#9a6648"
+        d="M48 28 C38 24 24 26 20 30 L20 68 C26 66 38 64 48 67 Z"
+        fill="#d4956e"
       />
-      {/* Book pages - top */}
+
+      {/* Right page spine edge (light peach shadow) */}
       <path
-        d="M20 22 L30 20 L80 25 L70 23 L22 19 Z"
-        fill="#e8ddd0"
-        stroke="#9a6648"
-        strokeWidth="1"
+        d="M52 28 C62 24 78 26 84 31 L84 69 C78 67 62 64 52 67 Z"
+        fill="#e0c4a8"
       />
-      {/* Spine edge highlight */}
-      <line
-        x1="30"
-        y1="20"
-        x2="30"
-        y2="80"
-        stroke="#7d5339"
-        strokeWidth="2"
+      {/* Right page (cream) */}
+      <path
+        d="M52 28 C62 24 76 26 80 30 L80 68 C74 66 62 64 52 67 Z"
+        fill="#f2e0cc"
       />
+
+      {/* Spine binding */}
+      <rect x="47" y="26" width="6" height="44" rx="2" fill="#a0603c" />
     </svg>
   );
 }
