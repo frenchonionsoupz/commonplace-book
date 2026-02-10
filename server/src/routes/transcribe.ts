@@ -46,15 +46,11 @@ async function transcribe(filePath: string): Promise<string> {
   return data.text;
 }
 
-async function extractAudio(videoPath: string): Promise<string | null> {
-  try {
-    await execAsync('ffmpeg -version');
-    const audioPath = videoPath.replace(/\.[^.]+$/, '.mp3');
-    await execAsync(`ffmpeg -i "${videoPath}" -vn -acodec libmp3lame -q:a 4 -y "${audioPath}"`, { timeout: 120000 });
-    return audioPath;
-  } catch {
-    return null;
-  }
+async function extractAudio(videoPath: string): Promise<string> {
+  const audioPath = videoPath.replace(/\.[^.]+$/, '.mp3');
+  await execAsync(`ffmpeg -i "${videoPath}" -vn -acodec libmp3lame -q:a 4 -y "${audioPath}"`, { timeout: 120000 });
+  if (!fs.existsSync(audioPath)) throw new Error('Audio extraction produced no output');
+  return audioPath;
 }
 
 router.post('/', upload.single('audio'), async (req: Request, res: Response) => {
@@ -86,12 +82,7 @@ router.post('/video', upload.single('file'), async (req: Request, res: Response)
 
   try {
     const isVideo = req.file.mimetype?.startsWith('video/') || /\.(mp4|webm|mov|avi|mkv)$/i.test(req.file.originalname);
-    let audioPath = req.file.path;
-
-    if (isVideo) {
-      const extracted = await extractAudio(req.file.path);
-      if (extracted) audioPath = extracted;
-    }
+    const audioPath = isVideo ? await extractAudio(req.file.path) : req.file.path;
 
     const transcription = await transcribe(audioPath);
 
