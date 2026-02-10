@@ -81,12 +81,11 @@ async function transcribeWithWhisper(filePath: string): Promise<string> {
     const transcription = await openai.audio.transcriptions.create({
       file: fs.createReadStream(filePath),
       model: 'whisper-1',
-      response_format: 'text',
     });
     console.log('OpenAI API response received');
 
-    console.log('Transcription successful, length:', (transcription as unknown as string).length);
-    return transcription as unknown as string;
+    console.log('Transcription successful, length:', transcription.text.length);
+    return transcription.text;
   } catch (error: any) {
     // Log full error details
     console.error('OpenAI API Error Details:');
