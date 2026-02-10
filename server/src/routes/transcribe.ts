@@ -5,7 +5,6 @@ import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import OpenAI from 'openai';
 
 const execAsync = promisify(exec);
 const router = Router();
@@ -25,12 +24,26 @@ async function transcribe(filePath: string): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
 
-  const openai = new OpenAI({ apiKey });
-  const result = await openai.audio.transcriptions.create({
-    file: fs.createReadStream(filePath),
-    model: 'whisper-1',
+  const fileBuffer = fs.readFileSync(filePath);
+  const fileName = path.basename(filePath);
+
+  const form = new FormData();
+  form.append('file', new Blob([fileBuffer]), fileName);
+  form.append('model', 'whisper-1');
+
+  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: form,
   });
-  return result.text;
+
+  if (!res.ok) {
+    const body: any = await res.json().catch(() => ({}));
+    throw new Error(body?.error?.message || `OpenAI API error: ${res.status}`);
+  }
+
+  const data: any = await res.json();
+  return data.text;
 }
 
 async function extractAudio(videoPath: string): Promise<string | null> {
