@@ -135,18 +135,25 @@ export const api = {
     return res.json() as Promise<{ url: string; transcription: string; message?: string }>;
   },
 
-  // Video transcription
+  // Video transcription (5 min timeout for longer videos)
   async transcribeVideo(file: File) {
     const token = getToken();
     const formData = new FormData();
     formData.append('file', file, file.name);
-    const res = await fetch(`${BASE}/transcribe/video`, {
-      method: 'POST',
-      body: formData,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!res.ok) throw new Error('Video transcription failed');
-    return res.json() as Promise<{ url: string; transcription: string; message?: string }>;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 300000);
+    try {
+      const res = await fetch(`${BASE}/transcribe/video`, {
+        method: 'POST',
+        body: formData,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error('Video transcription failed');
+      return res.json() as Promise<{ url: string; transcription: string; message?: string }>;
+    } finally {
+      clearTimeout(timeout);
+    }
   },
 
   // Export

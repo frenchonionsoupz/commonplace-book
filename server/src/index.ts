@@ -53,9 +53,14 @@ async function start() {
     await initDb();
     console.log('Database initialized');
 
-    app.listen(Number(PORT), HOST, () => {
+    const server = app.listen(Number(PORT), HOST, () => {
       console.log(`Commonplace Book server running on http://${HOST}:${PORT}`);
     });
+
+    // Allow up to 5 minutes for video transcription requests
+    server.timeout = 300000;
+    server.keepAliveTimeout = 300000;
+    server.headersTimeout = 300000;
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
