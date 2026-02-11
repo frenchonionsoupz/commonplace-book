@@ -1,17 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
   <rect width="192" height="192" rx="24" fill="#faf6f1"/>
-  <g transform="translate(26, 22) scale(1.4)">
-    <!-- Shadow -->
-    <ellipse cx="50" cy="78" rx="28" ry="4" fill="rgba(0,0,0,0.06)" />
-    <!-- Left page spine edge -->
-    <path d="M48 28 C38 24 22 26 16 31 L16 69 C22 67 38 64 48 67 Z" fill="#b07050"/>
-    <!-- Left page -->
-    <path d="M48 28 C38 24 24 26 20 30 L20 68 C26 66 38 64 48 67 Z" fill="#d4956e"/>
-    <!-- Right page spine edge -->
-    <path d="M52 28 C62 24 78 26 84 31 L84 69 C78 67 62 64 52 67 Z" fill="#e0c4a8"/>
-    <!-- Right page -->
-    <path d="M52 28 C62 24 76 26 80 30 L80 68 C74 66 62 64 52 67 Z" fill="#f2e0cc"/>
-    <!-- Spine -->
-    <rect x="47" y="26" width="6" height="44" rx="2" fill="#a0603c"/>
+  <g transform="translate(26, 18) scale(1.4)">
+    <path d="M50 30 L50 75 L15 68 L15 25 Z" fill="#c88050"/>
+    <path d="M50 30 L50 75 L85 68 L85 25 Z" fill="#f0d5b8"/>
+    <line x1="50" y1="28" x2="50" y2="76" stroke="#a0603c" stroke-width="3" stroke-linecap="round"/>
+    <line x1="24" y1="38" x2="44" y2="41" stroke="#a86840" stroke-width="1.5" opacity="0.3" stroke-linecap="round"/>
+    <line x1="24" y1="46" x2="44" y2="49" stroke="#a86840" stroke-width="1.5" opacity="0.3" stroke-linecap="round"/>
+    <line x1="24" y1="54" x2="44" y2="57" stroke="#a86840" stroke-width="1.5" opacity="0.3" stroke-linecap="round"/>
   </g>
 </svg>
