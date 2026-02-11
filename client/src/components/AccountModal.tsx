@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Download, FileJson, FileText, Trash2, AlertTriangle } from 'lucide-react';
+import { X, Download, FileJson, FileText, Trash2, AlertTriangle, LogOut } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 
@@ -89,6 +89,17 @@ export default function AccountModal({ onClose }: Props) {
               Markdown
             </button>
           </div>
+        </div>
+
+        {/* Log out */}
+        <div className="mb-6">
+          <button
+            onClick={() => { logout(); onClose(); }}
+            className="btn-secondary w-full flex items-center justify-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Log Out
+          </button>
         </div>
 
         {/* Danger zone - collapsed by default */}
