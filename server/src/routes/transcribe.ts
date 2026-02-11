@@ -36,10 +36,11 @@ async function transcribe(filePath: string): Promise<string> {
 }
 
 // Extract audio track from video using ffmpeg
+// Mono 16kHz 48kbps — small file, fast Whisper upload, perfect for speech
 async function extractAudio(videoPath: string): Promise<string> {
   const audioPath = videoPath.replace(/\.[^.]+$/, '.mp3');
   await execAsync(
-    `ffmpeg -i "${videoPath}" -vn -acodec libmp3lame -q:a 4 -y "${audioPath}"`,
+    `ffmpeg -i "${videoPath}" -vn -ac 1 -ar 16000 -b:a 48k -y "${audioPath}"`,
     { timeout: 180000 },
   );
   return audioPath;
