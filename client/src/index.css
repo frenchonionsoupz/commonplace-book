@@ -79,11 +79,8 @@
   }
 
   .flourish {
-    @apply text-center text-parchment-400 text-lg py-1;
-  }
-
-  .flourish::before {
-    content: '\2767';
+    @apply my-2 mx-auto border-t border-parchment-300;
+    max-width: 6rem;
   }
 }
 
