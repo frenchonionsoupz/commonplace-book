@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PenLine, Mic, Film, Clock, Bookmark, BookOpen } from 'lucide-react';
+import { PenLine, Mic, Clock, Bookmark, BookOpen } from 'lucide-react';
 import { Note } from '../types';
 
 const typeIcon = {
   text: PenLine,
   voice: Mic,
-  video: Film,
 };
 
 export default function EmbedView() {
@@ -110,9 +109,6 @@ export default function EmbedView() {
                       <div className="mt-3 space-y-3">
                         {note.media_url && note.type === 'voice' && (
                           <audio controls src={note.media_url} className="w-full rounded" onClick={(e) => e.stopPropagation()} />
-                        )}
-                        {note.media_url && note.type === 'video' && (
-                          <video controls src={note.media_url} className="w-full rounded bg-black" onClick={(e) => e.stopPropagation()} />
                         )}
                         {note.transcription && (
                           <div className={`text-xs leading-relaxed p-3 rounded-lg whitespace-pre-wrap font-serif ${isDark ? 'bg-gray-700' : 'bg-parchment-100'}`}>

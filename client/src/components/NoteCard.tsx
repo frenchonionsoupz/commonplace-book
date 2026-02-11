@@ -1,11 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Clock, PenLine, Mic, Film, Bookmark } from 'lucide-react';
+import { Clock, PenLine, Mic, Bookmark } from 'lucide-react';
 import { Note } from '../types';
 
 const typeIcon = {
   text: PenLine,
   voice: Mic,
-  video: Film,
 };
 
 interface Props {

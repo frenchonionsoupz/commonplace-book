@@ -60,7 +60,6 @@ export default function EmbedCodeModal({ userId, onClose }: Props) {
               <option value="">All types</option>
               <option value="text">Text</option>
               <option value="voice">Voice</option>
-              <option value="video">Video</option>
             </select>
           </div>
           <div>

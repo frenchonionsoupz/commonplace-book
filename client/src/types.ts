@@ -1,4 +1,4 @@
-export type NoteType = 'text' | 'voice' | 'video';
+export type NoteType = 'text' | 'voice';
 
 export interface Note {
   id: string;

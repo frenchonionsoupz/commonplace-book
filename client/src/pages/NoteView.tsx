@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Edit2, Trash2, Clock, PenLine, Mic, Film, Bookmark } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Clock, PenLine, Mic, Bookmark } from 'lucide-react';
 import { api } from '../api';
 import { Note } from '../types';
 import NoteEditor from '../components/NoteEditor';
@@ -8,7 +8,6 @@ import NoteEditor from '../components/NoteEditor';
 const typeIcon = {
   text: PenLine,
   voice: Mic,
-  video: Film,
 };
 
 export default function NoteView() {
@@ -129,11 +128,6 @@ export default function NoteView() {
         {note.media_url && note.type === 'voice' && (
           <div className="mb-6">
             <audio controls src={note.media_url} className="w-full rounded" />
-          </div>
-        )}
-        {note.media_url && note.type === 'video' && (
-          <div className="mb-6">
-            <video controls src={note.media_url} className="w-full rounded bg-black" />
           </div>
         )}
 
