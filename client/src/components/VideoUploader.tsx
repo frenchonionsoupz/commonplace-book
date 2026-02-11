@@ -3,7 +3,7 @@ import { Upload, Film, Loader2, X } from 'lucide-react';
 import { api } from '../api';
 
 interface Props {
-  onTranscriptionComplete: (transcription: string, mediaUrl: string) => void;
+  onTranscriptionComplete: (transcription: string, mediaUrl: string, message?: string) => void;
 }
 
 export default function VideoUploader({ onTranscriptionComplete }: Props) {
@@ -20,7 +20,7 @@ export default function VideoUploader({ onTranscriptionComplete }: Props) {
 
     try {
       const data = await api.transcribeVideo(file);
-      onTranscriptionComplete(data.transcription || '', data.url || '');
+      onTranscriptionComplete(data.transcription || '', data.url || '', data.message);
     } catch (err: any) {
       setError(err.message || 'Transcription failed');
     } finally {

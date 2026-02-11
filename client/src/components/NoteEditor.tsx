@@ -23,6 +23,7 @@ export default function NoteEditor({ note, onSave, onCancel }: Props) {
   const [saving, setSaving] = useState(false);
   const [mediaUrl, setMediaUrl] = useState(note?.media_url || '');
   const [transcription, setTranscription] = useState(note?.transcription || '');
+  const [videoMessage, setVideoMessage] = useState('');
 
   const handleSave = async () => {
     const finalContent = selectedType === 'text' ? content.trim() : '';
@@ -62,10 +63,11 @@ export default function NoteEditor({ note, onSave, onCancel }: Props) {
     setContent(text);
   };
 
-  const handleVideoComplete = (text: string, url: string) => {
+  const handleVideoComplete = (text: string, url: string, message?: string) => {
     setTranscription(text);
     setContent(text);
     setMediaUrl(url);
+    if (message && !text) setVideoMessage(message);
   };
 
   const typeOptions: { type: NoteType; icon: typeof PenLine; label: string; description: string }[] = [
@@ -121,7 +123,7 @@ export default function NoteEditor({ note, onSave, onCancel }: Props) {
         <div className="flex items-center gap-2 text-parchment-800">
           {!isEditing && (
             <button
-              onClick={() => { setSelectedType(null); setTranscription(''); setMediaUrl(''); setContent(existingContent); }}
+              onClick={() => { setSelectedType(null); setTranscription(''); setMediaUrl(''); setVideoMessage(''); setContent(existingContent); }}
               className="btn-icon mr-1"
               title="Change type"
             >
@@ -148,12 +150,19 @@ export default function NoteEditor({ note, onSave, onCancel }: Props) {
         )}
 
         {/* Video uploader */}
-        {selectedType === 'video' && !transcription && (
+        {selectedType === 'video' && !mediaUrl && (
           <VideoUploader onTranscriptionComplete={handleVideoComplete} />
         )}
 
+        {/* No audio track message for screen recordings */}
+        {selectedType === 'video' && videoMessage && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+            {videoMessage}
+          </div>
+        )}
+
         {/* Transcription result for voice/video */}
-        {selectedType !== 'text' && transcription && (
+        {selectedType !== 'text' && (transcription || (selectedType === 'video' && mediaUrl)) && (
           <div className="p-4 bg-parchment-50 rounded-lg border border-parchment-200">
             <label className="block text-xs font-medium text-ink-500 mb-2 font-serif italic">
               Transcription

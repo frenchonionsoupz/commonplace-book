@@ -35,6 +35,19 @@ async function transcribe(filePath: string): Promise<string> {
   return result.text;
 }
 
+// Check if video file contains an audio stream
+async function hasAudioStream(videoPath: string): Promise<boolean> {
+  try {
+    const { stdout } = await execAsync(
+      `ffprobe -v quiet -select_streams a -show_entries stream=codec_type -of csv=p=0 "${videoPath}"`,
+      { timeout: 30000 },
+    );
+    return stdout.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
 // Extract audio track from video using ffmpeg
 async function extractAudio(videoPath: string): Promise<string> {
   const audioPath = videoPath.replace(/\.[^.]+$/, '.mp3');
@@ -81,6 +94,14 @@ router.post('/video', upload.single('file'), async (req: Request, res: Response)
       /\.(mp4|webm|mov|avi|mkv)$/i.test(req.file.originalname);
 
     if (isVideo) {
+      const hasAudio = await hasAudioStream(req.file.path);
+      if (!hasAudio) {
+        return res.json({
+          url: fileUrl,
+          transcription: '',
+          message: 'No audio track found in video. Screen recordings often lack audio — enable microphone recording to capture audio.',
+        });
+      }
       audioPath = await extractAudio(req.file.path);
     }
 
