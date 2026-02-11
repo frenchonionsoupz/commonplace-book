@@ -39,10 +39,27 @@ async function transcribe(filePath: string): Promise<string> {
 // Mono 16kHz 48kbps — small file, fast Whisper upload, perfect for speech
 async function extractAudio(videoPath: string): Promise<string> {
   const audioPath = videoPath.replace(/\.[^.]+$/, '.mp3');
-  await execAsync(
-    `ffmpeg -i "${videoPath}" -vn -ac 1 -ar 16000 -b:a 48k -y "${audioPath}"`,
-    { timeout: 180000 },
-  );
+  try {
+    const { stderr } = await execAsync(
+      `ffmpeg -i "${videoPath}" -vn -ac 1 -ar 16000 -b:a 48k -y "${audioPath}"`,
+      { timeout: 180000 },
+    );
+    console.log('ffmpeg output:', stderr?.slice(-500));
+  } catch (err: any) {
+    // ffmpeg writes progress to stderr even on success, so check if output file exists
+    console.error('ffmpeg error:', err.message?.slice(-500));
+    if (!fs.existsSync(audioPath) || fs.statSync(audioPath).size === 0) {
+      throw new Error('Failed to extract audio from video');
+    }
+  }
+
+  // Verify the extracted file has actual content
+  const stat = fs.statSync(audioPath);
+  console.log(`Extracted audio: ${stat.size} bytes`);
+  if (stat.size < 1000) {
+    throw new Error('Extracted audio is empty — video may not contain an audio track');
+  }
+
   return audioPath;
 }
 
@@ -80,15 +97,21 @@ router.post('/video', upload.single('file'), async (req: Request, res: Response)
 
   let audioPath: string | null = null;
 
+  console.log(`Video upload: ${req.file.originalname} (${req.file.mimetype}, ${(req.file.size / 1024 / 1024).toFixed(1)}MB)`);
+
   try {
     const isVideo = req.file.mimetype?.startsWith('video/') ||
       /\.(mp4|webm|mov|avi|mkv)$/i.test(req.file.originalname);
+
+    console.log(`Detected as ${isVideo ? 'video' : 'audio'}, extracting...`);
 
     if (isVideo) {
       audioPath = await extractAudio(req.file.path);
     }
 
+    console.log('Sending to Whisper...');
     const transcription = await transcribe(audioPath || req.file.path);
+    console.log(`Transcription complete: ${transcription.length} chars`);
     res.json({ url: fileUrl, transcription });
   } catch (error: any) {
     console.error('Video transcription error:', error.message);
