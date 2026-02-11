@@ -27,7 +27,7 @@ async function transcribe(filePath: string): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
 
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({ apiKey, timeout: 300000 });
   const result = await openai.audio.transcriptions.create({
     file: fs.createReadStream(filePath),
     model: 'whisper-1',
@@ -66,6 +66,9 @@ router.post('/', upload.single('audio'), async (req: Request, res: Response) => 
 
 // POST /api/transcribe/video — video → extract audio → transcribe
 router.post('/video', upload.single('file'), async (req: Request, res: Response) => {
+  // Allow up to 5 minutes for upload + ffmpeg + Whisper
+  req.setTimeout(300000);
+  res.setTimeout(300000);
   if (!req.file) return res.status(400).json({ error: 'No file provided' });
 
   const fileUrl = `/uploads/${req.file.filename}`;
