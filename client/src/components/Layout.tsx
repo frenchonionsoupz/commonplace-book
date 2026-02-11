@@ -1,5 +1,5 @@
 import { Outlet, Link } from 'react-router-dom';
-import { Code, Mail, User } from 'lucide-react';
+import { Code, Mail, User, HelpCircle } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import EmbedCodeModal from './EmbedCodeModal';
 import EmailExportModal from './EmailExportModal';
@@ -31,6 +31,13 @@ export default function Layout() {
             </div>
           </Link>
           <div className="flex items-center gap-2">
+            <Link
+              to="/philosophy"
+              className="btn-icon"
+              title="Our philosophy"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </Link>
             <button
               onClick={() => setShowExport(true)}
               className="btn-icon"
