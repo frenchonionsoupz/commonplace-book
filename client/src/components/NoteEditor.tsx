@@ -80,31 +80,33 @@ export default function NoteEditor({ note, onSave, onCancel }: Props) {
   if (!selectedType && !isEditing) {
     return (
       <div className="fixed inset-0 z-50 bg-parchment-50 flex flex-col md:relative md:inset-auto md:z-auto md:bg-transparent">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-parchment-200 md:border-0 md:p-6 md:pb-2">
-          <h2 className="text-xl font-semibold font-serif text-ink-800">New Entry</h2>
-          <button onClick={onCancel} className="p-2 -mr-2 text-ink-500 hover:text-ink-700">
+        {/* Close button — overlaid on mobile, inline on desktop */}
+        <div className="absolute top-3 right-3 z-10 md:relative md:top-auto md:right-auto md:flex md:items-center md:justify-between md:p-6 md:pb-2">
+          <h2 className="hidden md:block text-xl font-semibold font-serif text-ink-800">New Entry</h2>
+          <button onClick={onCancel} className="p-2 text-ink-500 hover:text-ink-700">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <p className="text-ink-500 px-4 pt-4 pb-2 text-center font-serif italic md:px-6">
+        <p className="hidden md:block text-ink-500 px-6 text-center font-serif italic">
           Choose how you'd like to capture this thought
         </p>
 
-        {/* Type options - fullscreen vertical stack on mobile, grid on desktop */}
-        <div className="flex-1 flex flex-col justify-center gap-4 p-6 md:flex-none md:grid md:grid-cols-3 md:gap-4">
-          {typeOptions.map(({ type, icon: Icon, label, description }) => (
+        {/* Type options — full-screen vertical stack on mobile, grid on desktop */}
+        <div className="flex-1 flex flex-col md:flex-none md:grid md:grid-cols-3 md:gap-4 md:p-6">
+          {typeOptions.map(({ type, icon: Icon, label, description }, i) => (
             <button
               key={type}
               onClick={() => setSelectedType(type)}
-              className="flex-1 md:flex-none flex flex-col items-center justify-center p-6 md:p-6 rounded-xl border-2 border-parchment-200 bg-white hover:border-parchment-500 hover:bg-parchment-50 transition-all group active:scale-[0.98]"
+              className={`flex-1 md:flex-none flex flex-col items-center justify-center p-6 bg-white hover:bg-parchment-50 transition-all group active:bg-parchment-100 md:rounded-xl md:border-2 md:border-parchment-200 md:hover:border-parchment-500 md:active:scale-[0.98] ${
+                i < typeOptions.length - 1 ? 'border-b border-parchment-200 md:border-b-2' : ''
+              }`}
             >
               <div className="w-20 h-20 md:w-14 md:h-14 rounded-full bg-parchment-100 flex items-center justify-center mb-4 md:mb-3 group-hover:bg-parchment-200 transition-colors">
                 <Icon className="w-10 h-10 md:w-7 md:h-7 text-parchment-700" />
               </div>
-              <span className="text-xl md:text-base font-semibold text-ink-800 font-serif">{label}</span>
-              <span className="text-sm md:text-xs text-ink-500 mt-2 md:mt-1 text-center">{description}</span>
+              <span className="text-2xl md:text-base font-semibold text-ink-800 font-serif">{label}</span>
+              <span className="text-base md:text-xs text-ink-500 mt-2 md:mt-1 text-center">{description}</span>
             </button>
           ))}
         </div>

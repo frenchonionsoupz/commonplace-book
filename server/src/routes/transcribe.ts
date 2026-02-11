@@ -19,7 +19,7 @@ const upload = multer({
     destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
     filename: (_req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`),
   }),
-  limits: { fileSize: 100 * 1024 * 1024 },
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB — screen recordings from iOS can be large
 });
 
 // Send audio file to OpenAI Whisper and get text back
@@ -33,19 +33,6 @@ async function transcribe(filePath: string): Promise<string> {
     model: 'whisper-1',
   });
   return result.text;
-}
-
-// Check if video file contains an audio stream
-async function hasAudioStream(videoPath: string): Promise<boolean> {
-  try {
-    const { stdout } = await execAsync(
-      `ffprobe -v quiet -select_streams a -show_entries stream=codec_type -of csv=p=0 "${videoPath}"`,
-      { timeout: 30000 },
-    );
-    return stdout.trim().length > 0;
-  } catch {
-    return false;
-  }
 }
 
 // Extract audio track from video using ffmpeg
@@ -94,15 +81,16 @@ router.post('/video', upload.single('file'), async (req: Request, res: Response)
       /\.(mp4|webm|mov|avi|mkv)$/i.test(req.file.originalname);
 
     if (isVideo) {
-      const hasAudio = await hasAudioStream(req.file.path);
-      if (!hasAudio) {
+      try {
+        audioPath = await extractAudio(req.file.path);
+      } catch (extractErr: any) {
+        console.error('Audio extraction failed:', extractErr.message);
         return res.json({
           url: fileUrl,
           transcription: '',
-          message: 'No audio track found in video. Screen recordings often lack audio — enable microphone recording to capture audio.',
+          message: 'Could not extract audio from video. The file may not contain an audio track.',
         });
       }
-      audioPath = await extractAudio(req.file.path);
     }
 
     const transcription = await transcribe(audioPath || req.file.path);
