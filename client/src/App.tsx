@@ -6,6 +6,7 @@ import NoteView from './pages/NoteView';
 import EmbedView from './pages/EmbedView';
 import AuthPage from './pages/AuthPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import PhilosophyPage from './pages/PhilosophyPage';
 import InstallPrompt from './components/InstallPrompt';
 
 function AppRoutes() {
@@ -26,6 +27,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/embed" element={<EmbedView />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/philosophy" element={<PhilosophyPage />} />
       {user ? (
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
